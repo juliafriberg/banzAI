@@ -2549,14 +2549,12 @@ function aStarSearch(graph, start, goal, heuristics, timeout) {
         path: [start],
         cost: 0
     };
-    while (result.path.length < 3) {
-        var edge = graph.outgoingEdges(start)[0];
-        if (!edge)
-            break;
-        start = edge.to;
-        result.path.push(start);
-        result.cost += edge.cost;
-    }
+    var openSet = new collections.PriorityQueue();
+    var closedSet = [start];
+    var cameFrom = {};
+    var gScore = {};
+    gScore["start"] = 0;
+    console.log("NODE" + start);
     return result;
     /* Pseudocode from Wikipedia for A* search:
     // The set of nodes already evaluated.

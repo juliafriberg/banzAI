@@ -8,15 +8,32 @@ var SearchResult = (function () {
     }
     return SearchResult;
 }());
+var NodeScore = (function () {
+    function NodeScore(n, s) {
+        this.node = n;
+        this.score = s;
+    }
+    return NodeScore;
+}());
+var cmp = function (a, b) {
+    if (a.score > b.score)
+        return 1;
+    if (a.score < b.score)
+        return -1;
+    return 0;
+};
 function aStarSearch(graph, start, goal, heuristics, timeout) {
     var result = {
         path: [start],
         cost: 0
     };
+    var openSet = new collections.PriorityQueue(cmp);
+    openSet.enqueue(new NodeScore(start, heuristics(start)));
     var closedSet = [];
-    var openSet = new collections.PriorityQueue();
     var cameFrom = {};
     var gScore = {};
+    gScore["start"] = 0;
+    console.log("NODE" + start);
     return result;
 }
 var GridNode = (function () {

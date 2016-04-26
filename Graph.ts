@@ -32,6 +32,23 @@ class SearchResult<Node> {
     cost : number;
 }
 
+class NodeScore {
+  node : Node;
+  score : number;
+  constructor(n:Node, s:number){
+    this.node = n;
+    this.score = s;
+  }
+}
+
+var cmp: collections.ICompareFunction<NodeScore> = function (a, b) {
+  if (a.score > b.score)
+    return 1;
+  if (a.score < b.score)
+    return -1;
+  return 0;
+}
+
 /**
 * A\* search implementation, parameterised by a `Node` type. The code
 * here is just a template; you should rewrite this function
@@ -60,15 +77,19 @@ function aStarSearch<Node> (
         path: [start],
         cost: 0
     };
-    while (result.path.length < 3) {
-        var edge : Edge<Node> = graph.outgoingEdges(start) [0];
-        if (! edge) break;
-        start = edge.to;
-        result.path.push(start);
-        result.cost += edge.cost;
-    }
-    return result;
 
+    var openSet = new collections.PriorityQueue<NodeScore>(cmp);
+    openSet.enqueue(new NodeScore(start, heuristics(start)));
+    var closedSet : Node[] = [];
+
+    var cameFrom : { [key:string]:number; } = {};
+    var gScore : { [key:string]:number; } = {};
+
+    gScore["start"] = 0;
+
+    console.log("NODE" + start);
+
+    return result;
     /* Pseudocode from Wikipedia for A* search:
     // The set of nodes already evaluated.
     closedSet := {}
