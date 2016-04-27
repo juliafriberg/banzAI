@@ -45,7 +45,7 @@ class NodeScore<Node> {
   }
 }
 
-var cmp: collections.IEqualsFunction<NodeScore<Node>> = function(a, b) {
+var cmp: collections.IEqualsFunction<NodeScore<Node>> = function(a, b) : boolean {
   if (a.node === b.node)
     return true;
   return false;
