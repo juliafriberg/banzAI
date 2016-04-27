@@ -32,6 +32,7 @@ class SearchResult<Node> {
   cost: number;
 }
 
+// Node with parent and scores, based on Node
 class NodeScore<Node> {
   parent: NodeScore<Node>;
   node: Node;
@@ -45,6 +46,8 @@ class NodeScore<Node> {
   }
 }
 
+// Equals function to use for LinkedList, just compares the actual node in the NodeScore
+// Sent to indexOf and contains function in the LinkedList object.
 var cmp: collections.IEqualsFunction<NodeScore<Node>> = function(a, b) : boolean {
   if (a.node === b.node)
     return true;
@@ -81,7 +84,9 @@ function aStarSearch<Node>(
     path: [],
     cost: 0
   };
+
   var openSet = new collections.LinkedList<NodeScore<Node>>();
+  // function to get the lowest scoring node from the openSet
   var getLowest = function() : NodeScore<Node> {
     var cur = openSet.firstNode;
     var ret = cur.element;
@@ -99,24 +104,36 @@ function aStarSearch<Node>(
 
   while (!openSet.isEmpty) {
     var current = getLowest();
+    // If we're at goal node, reconstruct the path and add to the result
     if (goal(current.node)) {
+      // g-cost is already calculated on the way here
       result.cost = current.g;
       while(current.parent) {
+        // the adding/reconstruction
         result.path.push(current.node);
         current = current.parent;
       }
+      // Reversing to get the start node at the start
       result.path = result.path.reverse();
       return result;
     }
+    // If we're not at a goal node, set current node to closed, and check the neighbours
     closedSet.push(current.node);
     var neighbours = graph.outgoingEdges(current.node);
     for (let n of neighbours) {
+      // if they're checked, continue to next
       if (closedSet.indexOf(n.from) > -1) {
         continue
       }
+      // Temporary g-score for the the neighbouring node. current g-score plus the
+      // edge cost between the neighbour and the current.
       var t_gScore: number = current.g + n.cost;
+      // create a new node, where current is the parent, f and g are given by  the temporary g-score
       var next = new NodeScore(current, n.to, heuristics(n.to) + t_gScore, t_gScore);
       var existing = openSet.elementAtIndex(openSet.indexOf(next,cmp));
+      // if the node isn't in the open set, add it.
+      // if it is, check if the score is better.
+      // If score is better, update the node.
       if (!openSet.contains(next,cmp)) {
         openSet.add(next);
       } else if (t_gScore >= existing.g) {
@@ -127,8 +144,8 @@ function aStarSearch<Node>(
       }
     }
   }
-
-  return result;
+  // if we get here, we didn't get to a goal node.
+  return undefined;
 }
 
 

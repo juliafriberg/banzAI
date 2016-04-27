@@ -75,7 +75,7 @@ function aStarSearch(graph, start, goal, heuristics, timeout) {
             }
         }
     }
-    return result;
+    return undefined;
 }
 var GridNode = (function () {
     function GridNode(pos) {
