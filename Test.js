@@ -2528,6 +2528,20 @@ var SearchResult = (function () {
     }
     return SearchResult;
 }());
+var NodeScore = (function () {
+    function NodeScore(p, n, f, g) {
+        this.parent = p;
+        this.node = n;
+        this.f = f;
+        this.g = g;
+    }
+    return NodeScore;
+}());
+var cmp = function (a, b) {
+    if (a.node === b.node)
+        return true;
+    return false;
+};
 /**
 * A\* search implementation, parameterised by a `Node` type. The code
 * here is just a template; you should rewrite this function
@@ -2546,67 +2560,58 @@ var SearchResult = (function () {
 function aStarSearch(graph, start, goal, heuristics, timeout) {
     // A dummy search result: it just picks the first possible neighbour
     var result = {
-        path: [start],
+        path: [],
         cost: 0
     };
-    var openSet = new collections.PriorityQueue();
-    var closedSet = [start];
-    var cameFrom = {};
-    var gScore = {};
-    gScore["start"] = 0;
-    console.log("NODE" + start);
+    var openSet = new collections.LinkedList();
+    var getLowest = function () {
+        var cur = openSet.firstNode;
+        var ret = cur.element;
+        while (cur.next) {
+            if (cur.element.f < ret.f) {
+                ret = cur.element;
+            }
+            cur = cur.next;
+        }
+        openSet.remove(ret);
+        return ret;
+    };
+    openSet.add(new NodeScore(undefined, start, heuristics(start), 0));
+    var closedSet = [];
+    while (!openSet.isEmpty) {
+        var current = getLowest();
+        if (goal(current.node)) {
+            result.cost = current.g;
+            while (current.parent) {
+                result.path.push(current.node);
+                current = current.parent;
+            }
+            result.path = result.path.reverse();
+            return result;
+        }
+        closedSet.push(current.node);
+        var neighbours = graph.outgoingEdges(current.node);
+        for (var _i = 0, neighbours_1 = neighbours; _i < neighbours_1.length; _i++) {
+            var n = neighbours_1[_i];
+            if (closedSet.indexOf(n.from) > -1) {
+                continue;
+            }
+            var t_gScore = current.g + n.cost;
+            var next = new NodeScore(current, n.to, heuristics(n.to) + t_gScore, t_gScore);
+            var existing = openSet.elementAtIndex(openSet.indexOf(next, cmp));
+            if (!openSet.contains(next, cmp)) {
+                openSet.add(next);
+            }
+            else if (t_gScore >= existing.g) {
+                continue;
+            }
+            else {
+                openSet.remove(existing);
+                openSet.add(next);
+            }
+        }
+    }
     return result;
-    /* Pseudocode from Wikipedia for A* search:
-    // The set of nodes already evaluated.
-    closedSet := {}
-    // The set of currently discovered nodes still to be evaluated.
-    // Initially, only the start node is known.
-    openSet := {start}
-    // For each node, which node it can most efficiently be reached from.
-    // If a node can be reached from many nodes, cameFrom will eventually contain the
-    // most efficient previous step.
-    cameFrom := the empty map
-
-    // For each node, the cost of getting from the start node to that node.
-    gScore := map with default value of Infinity
-    // The cost of going from start to start is zero.
-    gScore[start] := 0
-    // For each node, the total cost of getting from the start node to the goal
-    // by passing by that node. That value is partly known, partly heuristic.
-    fScore := map with default value of Infinity
-    // For the first node, that value is completely heuristic.
-    fScore[start] := heuristic_cost_estimate(start, goal)
-
-    while openSet is not empty
-        current := the node in openSet having the lowest fScore[] value
-        if current = goal
-            return reconstruct_path(cameFrom, current)
-
-        openSet.Remove(current)
-        closedSet.Add(current)
-        for each neighbor of current
-            if neighbor in closedSet
-                continue		// Ignore the neighbor which is already evaluated.
-            // The distance from start to a neighbor
-            tentative_gScore := gScore[current] + dist_between(current, neighbor)
-            if neighbor not in openSet	// Discover a new node
-                openSet.Add(neighbor)
-            else if tentative_gScore >= gScore[neighbor]
-                continue		// This is not a better path.
-
-            // This path is the best until now. Record it!
-            cameFrom[neighbor] := current
-            gScore[neighbor] := tentative_gScore
-            fScore[neighbor] := gScore[neighbor] + heuristic_cost_estimate(neighbor, goal)
-
-    return failure
-
-function reconstruct_path(cameFrom, current)
-    total_path := [current]
-    while current in cameFrom.Keys:
-        current := cameFrom[current]
-        total_path.append(current)
-    return total_path*/
 }
 var GridNode = (function () {
     function GridNode(pos) {

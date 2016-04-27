@@ -9,31 +9,72 @@ var SearchResult = (function () {
     return SearchResult;
 }());
 var NodeScore = (function () {
-    function NodeScore(n, s) {
+    function NodeScore(p, n, f, g) {
+        this.parent = p;
         this.node = n;
-        this.score = s;
+        this.f = f;
+        this.g = g;
     }
     return NodeScore;
 }());
 var cmp = function (a, b) {
-    if (a.score > b.score)
-        return 1;
-    if (a.score < b.score)
-        return -1;
-    return 0;
+    if (a.node === b.node)
+        return true;
+    return false;
 };
 function aStarSearch(graph, start, goal, heuristics, timeout) {
     var result = {
-        path: [start],
+        path: [],
         cost: 0
     };
-    var openSet = new collections.PriorityQueue(cmp);
-    openSet.enqueue(new NodeScore(start, heuristics(start)));
+    var openSet = new collections.LinkedList();
+    var getLowest = function () {
+        var cur = openSet.firstNode;
+        var ret = cur.element;
+        while (cur.next) {
+            if (cur.element.f < ret.f) {
+                ret = cur.element;
+            }
+            cur = cur.next;
+        }
+        openSet.remove(ret);
+        return ret;
+    };
+    openSet.add(new NodeScore(undefined, start, heuristics(start), 0));
     var closedSet = [];
-    var cameFrom = {};
-    var gScore = {};
-    gScore["start"] = 0;
-    console.log("NODE" + start);
+    while (!openSet.isEmpty) {
+        var current = getLowest();
+        if (goal(current.node)) {
+            result.cost = current.g;
+            while (current.parent) {
+                result.path.push(current.node);
+                current = current.parent;
+            }
+            result.path = result.path.reverse();
+            return result;
+        }
+        closedSet.push(current.node);
+        var neighbours = graph.outgoingEdges(current.node);
+        for (var _i = 0, neighbours_1 = neighbours; _i < neighbours_1.length; _i++) {
+            var n = neighbours_1[_i];
+            if (closedSet.indexOf(n.from) > -1) {
+                continue;
+            }
+            var t_gScore = current.g + n.cost;
+            var next = new NodeScore(current, n.to, heuristics(n.to) + t_gScore, t_gScore);
+            var existing = openSet.elementAtIndex(openSet.indexOf(next, cmp));
+            if (!openSet.contains(next, cmp)) {
+                openSet.add(next);
+            }
+            else if (t_gScore >= existing.g) {
+                continue;
+            }
+            else {
+                openSet.remove(existing);
+                openSet.add(next);
+            }
+        }
+    }
     return result;
 }
 var GridNode = (function () {
