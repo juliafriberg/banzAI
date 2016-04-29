@@ -32,30 +32,6 @@ class SearchResult<Node> {
   cost: number;
 }
 
-// Node with parent and scores, based on Node
-class NodeScore<Node> {
-  parent: NodeScore<Node>;
-  node: Node;
-  f: number;
-  g: number;
-  constructor(p: NodeScore<Node>, n: Node, f: number, g: number) {
-    this.parent = p;
-    this.node = n;
-    this.f = f;
-    this.g = g;
-  }
-}
-
-// Equals function to use for LinkedList, just compares the actual node in the NodeScore
-// Sent to indexOf and contains function in the LinkedList object.
-var cmp: collections.IEqualsFunction<NodeScore<Node>> = function(a, b) : boolean {
-  if (a.node === b.node)
-    return true;
-  return false;
-}
-
-
-
 /**
 * A\* search implementation, parameterised by a `Node` type. The code
 * here is just a template; you should rewrite this function
@@ -85,24 +61,51 @@ function aStarSearch<Node>(
     cost: 0
   };
 
-  var openSet = new collections.LinkedList<NodeScore<Node>>();
+  // Node with parent and scores, based on Node
+  class NodeScore {
+    parent: NodeScore;
+    node: Node;
+    f: number;
+    g: number;
+    constructor(p: NodeScore, n: Node, f: number, g: number) {
+      this.parent = p;
+      this.node = n;
+      this.f = f;
+      this.g = g;
+    }
+  }
+
+  // Equals function to use for LinkedList, just compares the actual node in the NodeScore
+  // Sent to indexOf and contains function in the LinkedList object.
+  var cmp: collections.IEqualsFunction<NodeScore> = function(a, b) : boolean {
+    if (a.node === b.node){
+      return true;
+    }
+    return false;
+  }
+
+  var openSet = new collections.LinkedList<NodeScore>();
   // function to get the lowest scoring node from the openSet
-  var getLowest = function() : NodeScore<Node> {
+  var getLowest = function() : NodeScore {
     var cur = openSet.firstNode;
     var ret = cur.element;
     while (cur.next) {
-      if (cur.element.f < ret.f){
+      if (cur.element.f < ret.f) {
         ret = cur.element;
       }
       cur = cur.next;
     }
+    if(cur.element.f < ret.f) {ret = cur.element;}
     openSet.remove(ret);
     return ret;
   }
+
+  // add the starting node to the open set
   openSet.add(new NodeScore(undefined, start, heuristics(start), 0));
+  // closed set is the ones looked at
   var closedSet: Node[] = [];
 
-  while (!openSet.isEmpty) {
+  while (!openSet.isEmpty()) {
     var current = getLowest();
     // If we're at goal node, reconstruct the path and add to the result
     if (goal(current.node)) {
@@ -113,8 +116,10 @@ function aStarSearch<Node>(
         result.path.push(current.node);
         current = current.parent;
       }
+      result.path.push(start);
       // Reversing to get the start node at the start
       result.path = result.path.reverse();
+      console.log("Found path.")
       return result;
     }
     // If we're not at a goal node, set current node to closed, and check the neighbours
@@ -145,6 +150,7 @@ function aStarSearch<Node>(
     }
   }
   // if we get here, we didn't get to a goal node.
+  console.log("COULDN*T FIND PATH")
   return undefined;
 }
 

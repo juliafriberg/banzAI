@@ -8,24 +8,25 @@ var SearchResult = (function () {
     }
     return SearchResult;
 }());
-var NodeScore = (function () {
-    function NodeScore(p, n, f, g) {
-        this.parent = p;
-        this.node = n;
-        this.f = f;
-        this.g = g;
-    }
-    return NodeScore;
-}());
-var cmp = function (a, b) {
-    if (a.node === b.node)
-        return true;
-    return false;
-};
 function aStarSearch(graph, start, goal, heuristics, timeout) {
     var result = {
         path: [],
         cost: 0
+    };
+    var NodeScore = (function () {
+        function NodeScore(p, n, f, g) {
+            this.parent = p;
+            this.node = n;
+            this.f = f;
+            this.g = g;
+        }
+        return NodeScore;
+    }());
+    var cmp = function (a, b) {
+        if (a.node === b.node) {
+            return true;
+        }
+        return false;
     };
     var openSet = new collections.LinkedList();
     var getLowest = function () {
@@ -37,12 +38,15 @@ function aStarSearch(graph, start, goal, heuristics, timeout) {
             }
             cur = cur.next;
         }
+        if (cur.element.f < ret.f) {
+            ret = cur.element;
+        }
         openSet.remove(ret);
         return ret;
     };
     openSet.add(new NodeScore(undefined, start, heuristics(start), 0));
     var closedSet = [];
-    while (!openSet.isEmpty) {
+    while (!openSet.isEmpty()) {
         var current = getLowest();
         if (goal(current.node)) {
             result.cost = current.g;
@@ -50,7 +54,9 @@ function aStarSearch(graph, start, goal, heuristics, timeout) {
                 result.path.push(current.node);
                 current = current.parent;
             }
+            result.path.push(start);
             result.path = result.path.reverse();
+            console.log("Found path.");
             return result;
         }
         closedSet.push(current.node);
@@ -75,6 +81,7 @@ function aStarSearch(graph, start, goal, heuristics, timeout) {
             }
         }
     }
+    console.log("COULDN*T FIND PATH");
     return undefined;
 }
 var GridNode = (function () {
