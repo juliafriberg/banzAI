@@ -54,7 +54,6 @@ function aStarSearch<Node>(
   heuristics: (n: Node) => number,
   timeout: number
   ): SearchResult<Node> {
-
   // A dummy search result: it just picks the first possible neighbour
   var result: SearchResult<Node> = {
     path: [],
@@ -82,7 +81,7 @@ function aStarSearch<Node>(
   // Equals function to use for LinkedList, just compares the actual node in the NodeScore
   // Sent to indexOf and contains function in the LinkedList object.
   var cmp: collections.IEqualsFunction<NodeScore> = function(a, b) : boolean {
-    return (a.node.toString() === b.node.toString())
+    return (graph.compareNodes(a.node,b.node) === 0)
   }
 
   // function to get the lowest scoring node from the openSet
@@ -118,7 +117,6 @@ function aStarSearch<Node>(
       }
       // Reversing to get the start node at the start
       result.path = result.path.reverse();
-      console.log("Found path. ---------------------------------------------------")
       return result;
     }
     // If we're not at a goal node, set current node to closed, and check the neighbours
@@ -155,6 +153,5 @@ function aStarSearch<Node>(
     }
   }
   // if we get here, we didn't get to a goal node.
-  console.log("COULDN*T FIND PATH")
   return undefined;
 }
