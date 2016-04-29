@@ -103,8 +103,8 @@ function aStarSearch<Node>(
   openSet.add(new NodeScore(null, start, heuristics(start), 0));
   // closed set is the ones looked at
   var closedSet: Node[] = [];
-
-  while (!openSet.isEmpty()) {
+  var startTime : number = Date.now();
+  while (!openSet.isEmpty() || Date.now() - startTime <= timeout*1000) {
     var current = getLowest();
     // If we're at goal node, reconstruct the path and add to the result
     if (goal(current.node)) {
@@ -152,6 +152,6 @@ function aStarSearch<Node>(
       }
     }
   }
-  // if we get here, we didn't get to a goal node.
+  // if we get here, we didn't get to a goal node in time.
   return undefined;
 }
