@@ -109,27 +109,148 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         var objects : string[] = Array.prototype.concat.apply([], state.stacks);
         var matchingObjects : string[] = [];
 
+        console.log(cmd.entity.object.color)
+
+        function isMatching(currentObject : ObjectDefinition, object : Parser.Object) : boolean {
+
+          console.log(currentObject.form, object.form)
+          if(object.form !== "anyform" && object.form) {
+            console.log("in form")
+            if(currentObject.form !== object.form) {
+              console.log("form doesn't match " + currentObject.form + " " + object.form)
+              return false;
+            }
+          }
+          console.log(currentObject.size, object.size)
+          if(object.size) {
+            console.log("in size")
+            if(currentObject.size !== object.size) {
+              console.log("size doesn't match " + currentObject.size + " " + object.size)
+              return false;
+            }
+          }
+          console.log(currentObject.color, object.color)
+          if(object.color) {
+            console.log("in color")
+            if(currentObject.color !== object.color) {
+              console.log("color doesn't match " + currentObject.color + " " + object.color)
+              return false;
+            }
+          }
+          return true;
+        }
+
         for(var i = 0; i < objects.length; i++) {
           var currentObject : ObjectDefinition = state.objects[objects[i]];
 
-          if(cmd.entity.object.form !== "anyform") {
-            if(currentObject.form !== cmd.entity.object.form) {
-              continue;
+          if(!isMatching(currentObject, cmd.entity.object)) continue;
+
+          console.log(currentObject);
+
+          var foundMatch : boolean = false;
+
+          if(cmd.entity.object.location) {
+            console.log("location");
+            var stacknumber : number = 0;
+            var objectnumber : number = 0;
+            for(var j = 0; j < state.stacks.length; j++) {
+              objectnumber = state.stacks[j].indexOf(objects[i]);
+              if(objectnumber) {
+                stacknumber = j;
+                break;
+              }
             }
-          }
-          if(cmd.entity.object.size) {
-            if(currentObject.size !== cmd.entity.object.size) {
-              continue;
+            switch(cmd.entity.object.location.relation) {
+              case "inside":
+                console.log("inside");
+                if(objectnumber > 0) {
+                  if(isMatching(state.objects[state.stacks[stacknumber][objectnumber-1]], cmd.entity.object.location.entity.object)) {
+                    foundMatch = true;
+                    break;
+                  }
+                }
+                break;
+              case "above":
+                console.log("above");
+                for(var j = objectnumber; j < state.stacks[stacknumber].length; j++) {
+                  if(isMatching(state.objects[state.stacks[stacknumber][j]], cmd.entity.object.location.entity.object)) {
+                    foundMatch = true;
+                    break;
+                  }
+                }
+                break;
+              case "ontop":
+              console.log("ontop");
+                if(objectnumber < state.stacks[stacknumber].length - 1) {
+                  if(isMatching(state.objects[state.stacks[stacknumber][objectnumber+1]], cmd.entity.object.location.entity.object)) {
+                    foundMatch = true;
+                    break;
+                  }
+                }
+                break;
+              case "toleft":
+                console.log("toleft");
+                for(var j = 0; j < stacknumber; j++) {
+                  for(var k = 0; k < state.stacks[j].length; k++) {
+                    if(isMatching(state.objects[state.stacks[j][k]], cmd.entity.object.location.entity.object)) {
+                      foundMatch = true;
+                      break;
+                    }
+                  }
+                }
+                break;
+              case "toright":
+                console.log("toright");
+                for(var j = stacknumber; j >= 0; j--) {
+                  for(var k = 0; k < state.stacks[j].length; k++) {
+                    if(isMatching(state.objects[state.stacks[j][k]], cmd.entity.object.location.entity.object)) {
+                      foundMatch = true;
+                      break;
+                    }
+                  }
+                }
+                break;
+              case "beside":
+                if(stacknumber > 0) {
+                  var leftStack : Stack = state.stacks[stacknumber - 1];
+                  for(var j = 0; j < leftStack.length; j++) {
+                    if(isMatching(state.objects[leftStack[j]], cmd.entity.object.location.entity.object)) {
+                      console.log(cmd.entity.object.location.entity.object.color, state.objects[leftStack[j]])
+                      foundMatch = true;
+                      break;
+                    }
+                  }
+                }
+
+                if(stacknumber < state.stacks.length - 1) {
+                  var rightStack : Stack = state.stacks[stacknumber + 1];
+                  for(var j = 0; j < rightStack.length; j++) {
+                    if(isMatching(state.objects[rightStack[j]], cmd.entity.object.location.entity.object)) {
+                      console.log(cmd.entity.object.location.entity.object.color, state.objects[rightStack[j]].color)
+                      foundMatch = true;
+                      break;
+                    }
+                  }
+                }
+                break;
+              case "under":
+                console.log("under");
+                for(var j = 0; j < objectnumber; j++) {
+                  if(isMatching(state.objects[state.stacks[stacknumber][j]], cmd.entity.object.location.entity.object)) {
+                    foundMatch = true;
+                    break;
+                  }
+                }
+                break;
+              default:
+                break;
+
             }
+          } else {
+            foundMatch = true;
           }
-          if(cmd.entity.object.color) {
-            if(currentObject.color !== cmd.entity.object.color) {
-              continue;
-            }
-          }
-          matchingObjects.push(objects[i]);
+          if(foundMatch) matchingObjects.push(objects[i]);
         }
-        console.log(matchingObjects.toString())
 
         var interpretation : DNFFormula = [];
         if(cmd.command == "take") {
