@@ -84,7 +84,7 @@ function aStarSearch<Node>(
     return (graph.compareNodes(a.node,b.node) === 0)
   }
 
-  // function to get the lowest scoring node from the openSet
+  // function to get (and remove) the lowest scoring node from the openSet
   var getLowest = function() : NodeScore {
     var cur = openSet.firstNode;
     var ret = cur.element;
