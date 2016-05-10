@@ -109,29 +109,21 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         var objects : string[] = Array.prototype.concat.apply([], state.stacks);
         var matchingObjects : string[] = [];
 
-        console.log(cmd.entity.object.color)
-
         function isMatching(currentObject : ObjectDefinition, object : Parser.Object) : boolean {
 
-          console.log(currentObject.form, object.form)
           if(object.form !== "anyform" && object.form) {
-            console.log("in form")
             if(currentObject.form !== object.form) {
               console.log("form doesn't match " + currentObject.form + " " + object.form)
               return false;
             }
           }
-          console.log(currentObject.size, object.size)
           if(object.size) {
-            console.log("in size")
             if(currentObject.size !== object.size) {
               console.log("size doesn't match " + currentObject.size + " " + object.size)
               return false;
             }
           }
-          console.log(currentObject.color, object.color)
           if(object.color) {
-            console.log("in color")
             if(currentObject.color !== object.color) {
               console.log("color doesn't match " + currentObject.color + " " + object.color)
               return false;
@@ -145,12 +137,9 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
 
           if(!isMatching(currentObject, cmd.entity.object)) continue;
 
-          console.log(currentObject);
-
           var foundMatch : boolean = false;
 
           if(cmd.entity.object.location) {
-            console.log("location");
             var stacknumber : number = 0;
             var objectnumber : number = 0;
             for(var j = 0; j < state.stacks.length; j++) {
@@ -215,7 +204,6 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                   var leftStack : Stack = state.stacks[stacknumber - 1];
                   for(var j = 0; j < leftStack.length; j++) {
                     if(isMatching(state.objects[leftStack[j]], cmd.entity.object.location.entity.object)) {
-                      console.log(cmd.entity.object.location.entity.object.color, state.objects[leftStack[j]])
                       foundMatch = true;
                       break;
                     }
@@ -226,7 +214,6 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                   var rightStack : Stack = state.stacks[stacknumber + 1];
                   for(var j = 0; j < rightStack.length; j++) {
                     if(isMatching(state.objects[rightStack[j]], cmd.entity.object.location.entity.object)) {
-                      console.log(cmd.entity.object.location.entity.object.color, state.objects[rightStack[j]].color)
                       foundMatch = true;
                       break;
                     }
@@ -251,6 +238,8 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
           }
           if(foundMatch) matchingObjects.push(objects[i]);
         }
+
+        console.log(matchingObjects.toString());
 
         var interpretation : DNFFormula = [];
         if(cmd.command == "take") {
