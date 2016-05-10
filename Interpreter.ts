@@ -111,8 +111,13 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
 
         console.log(cmd.entity.object.color)
 
+        /**
+        * Internal function used to compare an object to a description.
+        * @param currentObject The object to be compared.
+        * @param object An object description. Can contain color, size and/or form.
+        * @returns True if currentObject matches the description in object.
+        */
         function isMatching(currentObject : ObjectDefinition, object : Parser.Object) : boolean {
-
           console.log(currentObject.form, object.form)
           if(object.form !== "anyform" && object.form) {
             console.log("in form")
