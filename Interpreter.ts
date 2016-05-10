@@ -175,7 +175,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                 for(var j = objectnumber; j < state.stacks[stacknumber].length; j++) {
                   if(isMatching(state.objects[state.stacks[stacknumber][j]], cmd.entity.object.location.entity.object)) {
                     foundMatch = true;
-                    break;
+                    break; 
                   }
                 }
                 break;
