@@ -3,109 +3,141 @@ node TestInterpreter.js all
 --------------------------------------------------------------------------------
 Testing utterance: "take an object", in world "small"
 Found 1 parses
+e,g,l,k,m,f
 Correct interpretations:
-    No correct interpretations!
-Missing interpretations:
-    (-) holding(e) | holding(f) | holding(g) | holding(k) | holding(l) | holding(m)
+    (1) holding(e) | holding(f) | holding(g) | holding(k) | holding(l) | holding(m)
+Everything is correct!
 
 --------------------------------------------------------------------------------
 Testing utterance: "take a blue object", in world "small"
 Found 1 parses
+g,m
 Correct interpretations:
-    No correct interpretations!
-Missing interpretations:
-    (-) holding(g) | holding(m)
+    (1) holding(g) | holding(m)
+Everything is correct!
 
 --------------------------------------------------------------------------------
 Testing utterance: "take a box", in world "small"
 Found 1 parses
+l,k,m
 Correct interpretations:
-    No correct interpretations!
-Missing interpretations:
-    (-) holding(k) | holding(l) | holding(m)
+    (1) holding(k) | holding(l) | holding(m)
+Everything is correct!
 
 --------------------------------------------------------------------------------
 Testing utterance: "put a ball in a box", in world "small"
 Found 1 parses
+e,f
 Correct interpretations:
     No correct interpretations!
 Missing interpretations:
     (-) inside(e,k) | inside(e,l) | inside(f,k) | inside(f,l) | inside(f,m)
+Incorrect interpretations:
+    (1) ontop(e,floor)
 
 --------------------------------------------------------------------------------
 Testing utterance: "put a ball on a table", in world "small"
 Found 1 parses
+e,f
 Correct interpretations:
-    There are no interpretations!
-Everything is correct!
+    No correct interpretations!
+Incorrect interpretations:
+    (1) ontop(g,floor)
 
 --------------------------------------------------------------------------------
 Testing utterance: "put a ball above a table", in world "small"
 Found 1 parses
+e,f
 Correct interpretations:
     No correct interpretations!
 Missing interpretations:
     (-) above(e,g) | above(f,g)
+Incorrect interpretations:
+    (1) ontop(e,floor)
 
 --------------------------------------------------------------------------------
 Testing utterance: "put a big ball in a small box", in world "small"
 Found 1 parses
+e
 Correct interpretations:
-    There are no interpretations!
-Everything is correct!
+    No correct interpretations!
+Incorrect interpretations:
+    (1) ontop(l,floor)
 
 --------------------------------------------------------------------------------
 Testing utterance: "put a ball left of a ball", in world "small"
 Found 1 parses
+e,f
 Correct interpretations:
     No correct interpretations!
 Missing interpretations:
     (-) leftof(e,f) | leftof(f,e)
+Incorrect interpretations:
+    (1) ontop(f,floor)
 
 --------------------------------------------------------------------------------
 Testing utterance: "take a white object beside a blue object", in world "small"
 Found 1 parses
+
 Correct interpretations:
     No correct interpretations!
 Missing interpretations:
     (-) holding(e)
+Incorrect interpretations:
+    (1) 
 
 --------------------------------------------------------------------------------
 Testing utterance: "put a white object beside a blue object", in world "small"
 Found 1 parses
+e
 Correct interpretations:
     No correct interpretations!
 Missing interpretations:
     (-) beside(e,g) | beside(e,m)
+Incorrect interpretations:
+    (1) ontop(g,floor)
 
 --------------------------------------------------------------------------------
 Testing utterance: "put a ball in a box on the floor", in world "small"
 Found 2 parses
+
+e,f
 Correct interpretations:
-    No correct interpretations!
+    (1) ontop(f,floor)
 Missing interpretations:
     (-) inside(e,k) | inside(f,k)
-    (-) ontop(f,floor)
+Incorrect interpretations:
+    (2) ontop(g,floor)
 
 --------------------------------------------------------------------------------
 Testing utterance: "put a white ball in a box on the floor", in world "small"
 Found 2 parses
+
+e
 Correct interpretations:
     No correct interpretations!
 Missing interpretations:
     (-) inside(e,k)
+Incorrect interpretations:
+    (1) ontop(g,floor)
+    (2) ontop(k,floor)
 
 --------------------------------------------------------------------------------
 Testing utterance: "put a black ball in a box on the floor", in world "small"
 Found 2 parses
+
+f
 Correct interpretations:
     No correct interpretations!
 Missing interpretations:
     (-) inside(f,k)
     (-) ontop(f,floor)
+Incorrect interpretations:
+    (1) ontop(e,floor)
+    (2) ontop(k,floor)
 
 --------------------------------------------------------------------------------
 Summary statistics
-Passed tests: 2
-Failed tests: 11
+Passed tests: 3
+Failed tests: 10
 

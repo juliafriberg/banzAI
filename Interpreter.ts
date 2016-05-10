@@ -107,7 +107,8 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
      */
     function interpretCommand(cmd : Parser.Command, state : WorldState) : DNFFormula {
         var objects : string[] = Array.prototype.concat.apply([], state.stacks);
-        var matchingObjects : string[];
+        var matchingObjects : string[] = [];
+
         for(var i = 0; i < objects.length; i++) {
           var currentObject : ObjectDefinition = state.objects[objects[i]];
 
@@ -127,24 +128,22 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
             }
           }
           matchingObjects.push(objects[i]);
-
-
         }
+        console.log(matchingObjects.toString())
 
-        var interpretation : DNFFormula;
+        var interpretation : DNFFormula = [];
         if(cmd.command == "take") {
           for(var i = 0; i < matchingObjects.length; i++) {
             interpretation.push(
               [{polarity: true, relation: "holding", args: [matchingObjects[i]]}]);
           }
-        }else{
+        } else {
           var a : string = objects[Math.floor(Math.random() * objects.length)];
           interpretation.push([
               {polarity: true, relation: "ontop", args: [a, "floor"]}
           ]);
         }
 
-        console.log(interpretation.toString());
 
         return interpretation;
     }
