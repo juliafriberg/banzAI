@@ -138,14 +138,18 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
           return true;
         }
 
+        // Check each object in the world, to see if it's the one that should be moved/taken.
         for(var i = 0; i < objects.length; i++) {
           var currentObject : ObjectDefinition = state.objects[objects[i]];
-
+          // First check it it's matching the description, e.g. large and blue.
           if(!isMatching(currentObject, cmd.entity.object)) continue;
 
           var foundMatch : boolean = false;
-
+          // If the object is referenced by location, e.g. object inside a box, the
+          // following code block checks which ones still match.
           if(cmd.entity.object.location) {
+            // stacknumber: which stack the current object is in.
+            // objectnumber: where in the stack the object is.
             var stacknumber : number = 0;
             var objectnumber : number = 0;
             for(var j = 0; j < state.stacks.length; j++) {
@@ -155,6 +159,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
                 break;
               }
             }
+            // Checking for matches in the different possible relations
             switch(cmd.entity.object.location.relation) {
               case "inside":
                 console.log("inside");
@@ -248,11 +253,14 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         console.log(matchingObjects.toString());
 
         var interpretation : DNFFormula = [];
+        // If the command is to take, each object still matching is added to
+        // the list of interpretations with a "holding"-relation.
         if(cmd.command == "take") {
           for(var i = 0; i < matchingObjects.length; i++) {
             interpretation.push(
               [{polarity: true, relation: "holding", args: [matchingObjects[i]]}]);
           }
+        // dummy code
         } else {
           var a : string = objects[Math.floor(Math.random() * objects.length)];
           interpretation.push([
