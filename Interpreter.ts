@@ -3,12 +3,12 @@
 
 /**
 * Interpreter module
-* 
+*
 * The goal of the Interpreter module is to interpret a sentence
 * written by the user in the context of the current world state. In
 * particular, it must figure out which objects in the world,
 * i.e. which elements in the `objects` field of WorldState, correspond
-* to the ones referred to in the sentence. 
+* to the ones referred to in the sentence.
 *
 * Moreover, it has to derive what the intended goal state is and
 * return it as a logical formula described in terms of literals, where
@@ -34,7 +34,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
 * @param parses List of parses produced by the Parser.
 * @param currentState The current state of the world.
 * @returns Augments ParseResult with a list of interpretations. Each interpretation is represented by a list of Literals.
-*/    
+*/
     export function interpret(parses : Parser.ParseResult[], currentState : WorldState) : InterpretationResult[] {
         var errors : Error[] = [];
         var interpretations : InterpretationResult[] = [];
@@ -76,7 +76,7 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
         polarity : boolean;
 	/** The name of the relation in question. */
         relation : string;
-	/** The arguments to the relation. Usually these will be either objects 
+	/** The arguments to the relation. Usually these will be either objects
      * or special strings such as "floor" or "floor-N" (where N is a column) */
         args : string[];
     }
@@ -106,16 +106,47 @@ Top-level function for the Interpreter. It calls `interpretCommand` for each pos
      * @returns A list of list of Literal, representing a formula in disjunctive normal form (disjunction of conjunctions). See the dummy interpetation returned in the code for an example, which means ontop(a,floor) AND holding(b).
      */
     function interpretCommand(cmd : Parser.Command, state : WorldState) : DNFFormula {
-        // This returns a dummy interpretation involving two random objects in the world
         var objects : string[] = Array.prototype.concat.apply([], state.stacks);
-        var a : string = objects[Math.floor(Math.random() * objects.length)];
-        var b : string = objects[Math.floor(Math.random() * objects.length)];
-        var interpretation : DNFFormula = [[
-            {polarity: true, relation: "ontop", args: [a, "floor"]},
-            {polarity: true, relation: "holding", args: [b]}
-        ]];
+        var matchingObjects : string[];
+        for(var i = 0; i<objects.length; i++) {
+          var currentObject : ObjectDefinition = state.objects[objects[i]];
+
+          if(cmd.entity.object.form !== "anyform") {
+            if(currentObject.form !== cmd.entity.object.form) {
+              break;
+            }
+          }
+          if(cmd.entity.object.size) {
+            if(currentObject.size !== cmd.entity.object.size) {
+              break;
+            }
+          }
+          if(cmd.entity.object.color) {
+            if(currentObject.color !== cmd.entity.object.color) {
+              break;
+            }
+          }
+          matchingObjects.push(objects[i]);
+
+
+        }
+
+        var interpretation : DNFFormula;
+        if(cmd.command == "take") {
+          for(var i = 0; i<matchingObjects.length; i++) {
+            interpretation.push(
+              [{polarity: true, relation: "holding", args: [matchingObjects[i]]}]);
+          }
+        }else{
+          var a : string = objects[Math.floor(Math.random() * objects.length)];
+          interpretation.push([
+              {polarity: true, relation: "ontop", args: [a, "floor"]}
+          ]);
+        }
+
+        console.log(interpretation.toString());
+
         return interpretation;
     }
 
 }
-
