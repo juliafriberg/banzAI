@@ -26,250 +26,258 @@
 */
 module Interpreter {
 
-    //////////////////////////////////////////////////////////////////////
-    // exported functions, classes and interfaces/types
+  //////////////////////////////////////////////////////////////////////
+  // exported functions, classes and interfaces/types
 
-/**
-Top-level function for the Interpreter. It calls `interpretCommand` for each possible parse of the command. No need to change this one.
-* @param parses List of parses produced by the Parser.
-* @param currentState The current state of the world.
-* @returns Augments ParseResult with a list of interpretations. Each interpretation is represented by a list of Literals.
-*/
-    export function interpret(parses : Parser.ParseResult[], currentState : WorldState) : InterpretationResult[] {
-        var errors : Error[] = [];
-        var interpretations : InterpretationResult[] = [];
-        parses.forEach((parseresult) => {
-            try {
-                var result : InterpretationResult = <InterpretationResult>parseresult;
-                result.interpretation = interpretCommand(result.parse, currentState);
-                interpretations.push(result);
-            } catch(err) {
-                errors.push(err);
-            }
-        });
-        if (interpretations.length) {
-            return interpretations;
-        } else {
-            // only throw the first error found
-            throw errors[0];
-        }
+  /**
+  Top-level function for the Interpreter. It calls `interpretCommand` for each possible parse of the command. No need to change this one.
+  * @param parses List of parses produced by the Parser.
+  * @param currentState The current state of the world.
+  * @returns Augments ParseResult with a list of interpretations. Each interpretation is represented by a list of Literals.
+  */
+  export function interpret(parses: Parser.ParseResult[], currentState: WorldState): InterpretationResult[] {
+    var errors: Error[] = [];
+    var interpretations: InterpretationResult[] = [];
+    parses.forEach((parseresult) => {
+      try {
+        var result: InterpretationResult = <InterpretationResult>parseresult;
+        result.interpretation = interpretCommand(result.parse, currentState);
+        interpretations.push(result);
+      } catch (err) {
+        errors.push(err);
+      }
+    });
+    if (interpretations.length) {
+      return interpretations;
+    } else {
+      // only throw the first error found
+      throw errors[0];
     }
+  }
 
-    export interface InterpretationResult extends Parser.ParseResult {
-        interpretation : DNFFormula;
-    }
+  export interface InterpretationResult extends Parser.ParseResult {
+    interpretation: DNFFormula;
+  }
 
-    export type DNFFormula = Conjunction[];
-    type Conjunction = Literal[];
+  export type DNFFormula = Conjunction[];
+  type Conjunction = Literal[];
 
-    /**
-    * A Literal represents a relation that is intended to
-    * hold among some objects.
-    */
-    export interface Literal {
-	/** Whether this literal asserts the relation should hold
-	 * (true polarity) or not (false polarity). For example, we
-	 * can specify that "a" should *not* be on top of "b" by the
-	 * literal {polarity: false, relation: "ontop", args:
-	 * ["a","b"]}.
-	 */
-        polarity : boolean;
-	/** The name of the relation in question. */
-        relation : string;
-	/** The arguments to the relation. Usually these will be either objects
-     * or special strings such as "floor" or "floor-N" (where N is a column) */
-        args : string[];
-    }
-
-    export function stringify(result : InterpretationResult) : string {
-        return result.interpretation.map((literals) => {
-            return literals.map((lit) => stringifyLiteral(lit)).join(" & ");
-            // return literals.map(stringifyLiteral).join(" & ");
-        }).join(" | ");
-    }
-
-    export function stringifyLiteral(lit : Literal) : string {
-        return (lit.polarity ? "" : "-") + lit.relation + "(" + lit.args.join(",") + ")";
-    }
-
-    //////////////////////////////////////////////////////////////////////
-    // private functions
-    /**
-     * The core interpretation function. The code here is just a
-     * template; you should rewrite this function entirely. In this
-     * template, the code produces a dummy interpretation which is not
-     * connected to `cmd`, but your version of the function should
-     * analyse cmd in order to figure out what interpretation to
-     * return.
-     * @param cmd The actual command. Note that it is *not* a string, but rather an object of type `Command` (as it has been parsed by the parser).
-     * @param state The current state of the world. Useful to look up objects in the world.
-     * @returns A list of list of Literal, representing a formula in disjunctive normal form (disjunction of conjunctions). See the dummy interpetation returned in the code for an example, which means ontop(a,floor) AND holding(b).
+  /**
+  * A Literal represents a relation that is intended to
+  * hold among some objects.
+  */
+  export interface Literal {
+    /** Whether this literal asserts the relation should hold
+     * (true polarity) or not (false polarity). For example, we
+     * can specify that "a" should *not* be on top of "b" by the
+     * literal {polarity: false, relation: "ontop", args:
+     * ["a","b"]}.
      */
-    function interpretCommand(cmd : Parser.Command, state : WorldState) : DNFFormula {
-        var objects : string[] = Array.prototype.concat.apply([], state.stacks);
-        var matchingObjects : string[] = [];
+    polarity: boolean;
+    /** The name of the relation in question. */
+    relation: string;
+    /** The arguments to the relation. Usually these will be either objects
+       * or special strings such as "floor" or "floor-N" (where N is a column) */
+    args: string[];
+  }
 
-        /**
-        * Internal function used to compare an object to a description.
-        * @param currentObject The object to be compared.
-        * @param object An object description. Can contain color, size and/or form.
-        * @returns True if currentObject matches the description in object.
-        */
-        function isMatching(currentObject : ObjectDefinition, object : Parser.Object) : boolean {
+  export function stringify(result: InterpretationResult): string {
+    return result.interpretation.map((literals) => {
+      return literals.map((lit) => stringifyLiteral(lit)).join(" & ");
+      // return literals.map(stringifyLiteral).join(" & ");
+    }).join(" | ");
+  }
 
-          if(object.form !== "anyform" && object.form) {
-            if(currentObject.form !== object.form) {
-              console.log("form doesn't match " + currentObject.form + " " + object.form)
-              return false;
-            }
-          }
-          if(object.size) {
-            if(currentObject.size !== object.size) {
-              console.log("size doesn't match " + currentObject.size + " " + object.size)
-              return false;
-            }
-          }
-          if(object.color) {
-            if(currentObject.color !== object.color) {
-              console.log("color doesn't match " + currentObject.color + " " + object.color)
-              return false;
-            }
-          }
-          return true;
+  export function stringifyLiteral(lit: Literal): string {
+    return (lit.polarity ? "" : "-") + lit.relation + "(" + lit.args.join(",") + ")";
+  }
+
+  //////////////////////////////////////////////////////////////////////
+  // private functions
+  /**
+   * The core interpretation function. The code here is just a
+   * template; you should rewrite this function entirely. In this
+   * template, the code produces a dummy interpretation which is not
+   * connected to `cmd`, but your version of the function should
+   * analyse cmd in order to figure out what interpretation to
+   * return.
+   * @param cmd The actual command. Note that it is *not* a string, but rather an object of type `Command` (as it has been parsed by the parser).
+   * @param state The current state of the world. Useful to look up objects in the world.
+   * @returns A list of list of Literal, representing a formula in disjunctive normal form (disjunction of conjunctions). See the dummy interpetation returned in the code for an example, which means ontop(a,floor) AND holding(b).
+   */
+  function interpretCommand(cmd: Parser.Command, state: WorldState): DNFFormula {
+    var objects: string[] = Array.prototype.concat.apply([], state.stacks);
+    var matchingObjects: string[] = [];
+
+    /**
+    * Internal function used to compare an object to a description.
+    * @param currentObject The object to be compared.
+    * @param object An object description. Can contain color, size and/or form.
+    * @returns True if currentObject matches the description in object.
+    */
+    function isMatching(currentObject: ObjectDefinition, object: Parser.Object): boolean {
+
+      if (object.form !== "anyform" && object.form) {
+        if (currentObject.form !== object.form) {
+          console.log("form doesn't match " + currentObject.form + " " + object.form)
+          return false;
         }
+      }
+      if (object.size) {
+        if (currentObject.size !== object.size) {
+          console.log("size doesn't match " + currentObject.size + " " + object.size)
+          return false;
+        }
+      }
+      if (object.color) {
+        if (currentObject.color !== object.color) {
+          console.log("color doesn't match " + currentObject.color + " " + object.color)
+          return false;
+        }
+      }
+      return true;
+    }
 
-        // Check each object in the world, to see if it's the one that should be moved/taken.
-        for(var i = 0; i < objects.length; i++) {
-          var currentObject : ObjectDefinition = state.objects[objects[i]];
-          // First check it it's matching the description, e.g. large and blue.
-          if(!isMatching(currentObject, cmd.entity.object)) continue;
+    // Check each object in the world, to see if it's the one that should be moved/taken.
+    for (var i = 0; i < objects.length; i++) {
+      var currentObject: ObjectDefinition = state.objects[objects[i]];
+      // First check it it's matching the description, e.g. large and blue.
+      if (!isMatching(currentObject, cmd.entity.object)) continue;
 
-          var foundMatch : boolean = false;
-          // If the object is referenced by location, e.g. object inside a box, the
-          // following code block checks which ones still match.
-          if(cmd.entity.object.location) {
-            // stacknumber: which stack the current object is in.
-            // objectnumber: where in the stack the object is.
-            var stacknumber : number = 0;
-            var objectnumber : number = 0;
-            for(var j = 0; j < state.stacks.length; j++) {
-              objectnumber = state.stacks[j].indexOf(objects[i]);
-              if(objectnumber) {
-                stacknumber = j;
+      var foundMatch: boolean = false;
+      // If the object is referenced by location, e.g. object inside a box, the
+      // following code block checks which ones still match.
+      if (cmd.entity.object.location) {
+        // stacknumber: which stack the current object is in.
+        // objectnumber: where in the stack the object is.
+        var stacknumber: number = 0;
+        var objectnumber: number = 0;
+        for (var j = 0; j < state.stacks.length; j++) {
+          objectnumber = state.stacks[j].indexOf(objects[i]);
+          if (objectnumber) {
+            stacknumber = j;
+            break;
+          }
+        }
+        // Checking for matches in the different possible relations. If the
+        // object matches any of the relations and the correct relating object,
+        // the foundMatch variable will be set to true.
+        switch (cmd.entity.object.location.relation) {
+          case "inside":
+            console.log("inside");
+            if (objectnumber > 0) {
+              if (isMatching(state.objects[state.stacks[stacknumber][objectnumber - 1]], cmd.entity.object.location.entity.object)) {
+                foundMatch = true;
                 break;
               }
             }
-            // Checking for matches in the different possible relations
-            switch(cmd.entity.object.location.relation) {
-              case "inside":
-                console.log("inside");
-                if(objectnumber > 0) {
-                  if(isMatching(state.objects[state.stacks[stacknumber][objectnumber-1]], cmd.entity.object.location.entity.object)) {
-                    foundMatch = true;
-                    break;
-                  }
-                }
+            break;
+          case "above":
+            console.log("above");
+            for (var j = objectnumber; j < state.stacks[stacknumber].length; j++) {
+              if (isMatching(state.objects[state.stacks[stacknumber][j]], cmd.entity.object.location.entity.object)) {
+                foundMatch = true;
                 break;
-              case "above":
-                console.log("above");
-                for(var j = objectnumber; j < state.stacks[stacknumber].length; j++) {
-                  if(isMatching(state.objects[state.stacks[stacknumber][j]], cmd.entity.object.location.entity.object)) {
-                    foundMatch = true;
-                    break;
-                  }
-                }
-                break;
-              case "ontop":
-              console.log("ontop");
-                if(objectnumber < state.stacks[stacknumber].length - 1) {
-                  if(isMatching(state.objects[state.stacks[stacknumber][objectnumber+1]], cmd.entity.object.location.entity.object)) {
-                    foundMatch = true;
-                    break;
-                  }
-                }
-                break;
-              case "toleft":
-                console.log("toleft");
-                for(var j = 0; j < stacknumber; j++) {
-                  for(var k = 0; k < state.stacks[j].length; k++) {
-                    if(isMatching(state.objects[state.stacks[j][k]], cmd.entity.object.location.entity.object)) {
-                      foundMatch = true;
-                      break;
-                    }
-                  }
-                }
-                break;
-              case "toright":
-                console.log("toright");
-                for(var j = stacknumber; j >= 0; j--) {
-                  for(var k = 0; k < state.stacks[j].length; k++) {
-                    if(isMatching(state.objects[state.stacks[j][k]], cmd.entity.object.location.entity.object)) {
-                      foundMatch = true;
-                      break;
-                    }
-                  }
-                }
-                break;
-              case "beside":
-                if(stacknumber > 0) {
-                  var leftStack : Stack = state.stacks[stacknumber - 1];
-                  for(var j = 0; j < leftStack.length; j++) {
-                    if(isMatching(state.objects[leftStack[j]], cmd.entity.object.location.entity.object)) {
-                      foundMatch = true;
-                      break;
-                    }
-                  }
-                }
-
-                if(stacknumber < state.stacks.length - 1) {
-                  var rightStack : Stack = state.stacks[stacknumber + 1];
-                  for(var j = 0; j < rightStack.length; j++) {
-                    if(isMatching(state.objects[rightStack[j]], cmd.entity.object.location.entity.object)) {
-                      foundMatch = true;
-                      break;
-                    }
-                  }
-                }
-                break;
-              case "under":
-                console.log("under");
-                for(var j = 0; j < objectnumber; j++) {
-                  if(isMatching(state.objects[state.stacks[stacknumber][j]], cmd.entity.object.location.entity.object)) {
-                    foundMatch = true;
-                    break;
-                  }
-                }
-                break;
-              default:
-                break;
-
+              }
             }
-          } else {
-            foundMatch = true;
-          }
-          if(foundMatch) matchingObjects.push(objects[i]);
+            break;
+          case "ontop":
+            console.log("ontop");
+            if (objectnumber < state.stacks[stacknumber].length - 1) {
+              if (isMatching(state.objects[state.stacks[stacknumber][objectnumber + 1]], cmd.entity.object.location.entity.object)) {
+                foundMatch = true;
+                break;
+              }
+            }
+            break;
+          case "toleft":
+            console.log("toleft");
+            for (var j = 0; j < stacknumber; j++) {
+              for (var k = 0; k < state.stacks[j].length; k++) {
+                if (isMatching(state.objects[state.stacks[j][k]], cmd.entity.object.location.entity.object)) {
+                  foundMatch = true;
+                  break;
+                }
+              }
+            }
+            break;
+          case "toright":
+            console.log("toright");
+            for (var j = stacknumber; j >= 0; j--) {
+              for (var k = 0; k < state.stacks[j].length; k++) {
+                if (isMatching(state.objects[state.stacks[j][k]], cmd.entity.object.location.entity.object)) {
+                  foundMatch = true;
+                  break;
+                }
+              }
+            }
+            break;
+          case "beside":
+            if (stacknumber > 0) {
+              var leftStack: Stack = state.stacks[stacknumber - 1];
+              for (var j = 0; j < leftStack.length; j++) {
+                if (isMatching(state.objects[leftStack[j]], cmd.entity.object.location.entity.object)) {
+                  foundMatch = true;
+                  break;
+                }
+              }
+            }
+
+            if (stacknumber < state.stacks.length - 1) {
+              var rightStack: Stack = state.stacks[stacknumber + 1];
+              for (var j = 0; j < rightStack.length; j++) {
+                if (isMatching(state.objects[rightStack[j]], cmd.entity.object.location.entity.object)) {
+                  foundMatch = true;
+                  break;
+                }
+              }
+            }
+            break;
+          case "under":
+            console.log("under");
+            for (var j = 0; j < objectnumber; j++) {
+              if (isMatching(state.objects[state.stacks[stacknumber][j]], cmd.entity.object.location.entity.object)) {
+                foundMatch = true;
+                break;
+              }
+            }
+            break;
+          default:
+            break;
+
         }
-
-        console.log(matchingObjects.toString());
-
-        var interpretation : DNFFormula = [];
-        // If the command is to take, each object still matching is added to
-        // the list of interpretations with a "holding"-relation.
-        if(cmd.command == "take") {
-          for(var i = 0; i < matchingObjects.length; i++) {
-            interpretation.push(
-              [{polarity: true, relation: "holding", args: [matchingObjects[i]]}]);
-          }
-        // dummy code
-        } else {
-          var a : string = objects[Math.floor(Math.random() * objects.length)];
-          interpretation.push([
-              {polarity: true, relation: "ontop", args: [a, "floor"]}
-          ]);
-        }
-
-
-        return interpretation;
+      } else {
+        foundMatch = true;
+      }
+      // If the item is still matching the description of what to be picked
+      // up, it is added to the array of matching objects.
+      if (foundMatch) matchingObjects.push(objects[i]);
     }
+    console.log(matchingObjects.toString());
+
+    // Now for movement. The location part of the command will be checked.
+    if (cmd.location) {
+
+    }
+
+    var interpretation: DNFFormula = [];
+    // If the command is to take, each object still matching is added to
+    // the list of interpretations with a "holding"-relation.
+    if (cmd.command == "take") {
+      for (var i = 0; i < matchingObjects.length; i++) {
+        interpretation.push(
+          [{ polarity: true, relation: "holding", args: [matchingObjects[i]] }]);
+      }
+      // dummy code
+    } else {
+      var a: string = objects[Math.floor(Math.random() * objects.length)];
+      interpretation.push([
+        { polarity: true, relation: "ontop", args: [a, "floor"] }
+      ]);
+    }
+
+
+    return interpretation;
+  }
 
 }
