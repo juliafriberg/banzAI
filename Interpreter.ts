@@ -111,6 +111,8 @@ module Interpreter {
     // The interpetation to return. Will be filled when applicable.
     var interpretation: DNFFormula = [];
 
+    console.log(cmd);
+
     /**
     * Internal function used to compare an object to a description.
     * @param currentObject The object to be compared.
@@ -328,6 +330,7 @@ module Interpreter {
       if (findMatch(cmd.entity.object.location, objects[i])) matchingObjects.push(objects[i]);
     }
 
+
     // Now for movement. The location part of the command will be checked. The
     // location and previous matching object(s) must obey the rules of the world.
 
@@ -337,30 +340,49 @@ module Interpreter {
         var moveObj : ObjectDefinition = state.objects[matchingObjects[i]];
         var destObj : Parser.Object = cmd.location.entity.object;
         if(isAllowed(moveObj, destObj)) {
-          for(var j = 0; j < objects.length; j++) {
-            var destObjDef : ObjectDefinition = state.objects[objects[j]];
-            //Can't match if floor, not tested in tests
-            if(isMatching(destObjDef, destObj)) {
-              //Can't find match if floor, fix!
-              if (matchingObjects[i] !== objects[j] && isAllowed(moveObj, destObjDef)
-                  && findMatch(cmd.entity.object.location, objects[j])) {
+          if(destObj.form !== "floor") {
+            for(var j = 0; j < objects.length; j++) {
+              var destObjDef : ObjectDefinition = state.objects[objects[j]];
+              if(isMatching(destObjDef, destObj)) {
                 var foundMatch : boolean;
-                if(destObj.location) {
-                  for(var k = 0; k < objects.length; k++) {
-                      //Can't find match if floor, fix!
-                      foundMatch = isMatching(state.objects[objects[k]], destObj.location.entity);
-                  }
-                }else{
-                  foundMatch = true;
-                }
-                if(foundMatch) {
-                  console.log(moveObj, destObjDef);
-                  interpretation.push([
-                    { polarity: true, relation: cmd.location.relation, args: [matchingObjects[i], objects[j]] }
-                  ]);
-                }
+                if (matchingObjects[i] !== objects[j] && isAllowed(moveObj, destObjDef)
+                    && findMatch(cmd.entity.object.location, objects[j])) {
 
+                  if(destObj.location) {
+
+                    for(var k = 0; k < objects.length; k++) {
+                      if(destObj.location.entity.object.form !== "floor") {
+                        foundMatch = isMatching(state.objects[objects[k]], destObj.location.entity.object);
+                      } else {
+                        var objectnumber : number;
+                        for (var l = 0; l < state.stacks.length; l++) {
+                          objectnumber = state.stacks[l].indexOf(objects[j]);
+                          if (objectnumber > -1) {
+                            break;
+                          }
+                        }
+                        foundMatch = objectnumber === 0;
+                      }
+                      if(foundMatch) break;
+                    }
+
+
+                  }else{
+                    foundMatch = true;
+                  }
+                  if(foundMatch) {
+                    interpretation.push([
+                      { polarity: true, relation: cmd.location.relation, args: [matchingObjects[i], objects[j]] }
+                    ]);
+                  }
+                }
               }
+            }
+          } else {
+            if(!destObj.location) {
+              interpretation.push([
+                { polarity: true, relation: cmd.location.relation, args: [matchingObjects[i], "floor"] }
+              ]);
             }
           }
         } else {
@@ -370,21 +392,6 @@ module Interpreter {
     }
 
 
-    /*
-    ---The floor can support at most N objects (beside each other).
-    ---All objects must be supported by something.
-    ---The arm can only hold one object at the time.
-    ---The arm can only pick up free objects.
-    ---Objects are “inside” boxes, but “ontop” of other objects.
-    ---Balls must be in boxes or on the floor, otherwise they roll away.
-    ---Balls cannot support anything.
-    ---Small objects cannot support large objects.
-    ---Boxes cannot contain pyramids, planks or boxes of the same size.
-    ---Small boxes cannot be supported by small bricks or pyramids.
-    ---Large boxes cannot be supported by large pyramids.
-    */
-
-
     // If the command is to take, each object still matching is added to
     // the list of interpretations with a "holding"-relation.
     if (cmd.command == "take") {
@@ -392,15 +399,10 @@ module Interpreter {
         interpretation.push(
           [{ polarity: true, relation: "holding", args: [matchingObjects[i]] }]);
       }
-      // dummy code
-    } /*else {
-      var a: string = objects[Math.floor(Math.random() * objects.length)];
-      interpretation.push([
-        { polarity: true, relation: "ontop", args: [a, "floor"] }
-      ]);
-    }*/
+    }
 
 
+    console.log(interpretation);
     return interpretation;
   }
 
