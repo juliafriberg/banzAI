@@ -140,6 +140,66 @@ module Interpreter {
       return true;
     }
 
+    function isAllowed(moveObj: ObjectDefinition, destObjParser?: Parser.Object, destObjDef?: ObjectDefinition) : boolean {
+      var destObj : any;
+
+      if(destObjDef) {
+        destObj = destObjDef;
+      } else if(destObjParser) {
+        destObj = destObjParser;
+      } else {
+        return false;
+      }
+
+      if(moveObj.size === "large" && destObj.size === "small"
+            && ["ontop","inside","above"].indexOf(cmd.location.relation) > -1) {
+              return false;
+        // fail
+      } else if(moveObj.size === "small" && destObj.size === "large"
+            && cmd.location.relation === "under") {
+              return false;
+        // fail
+      } else if(moveObj.form === "ball" && ((["floor","box"].indexOf(destObj.form) === -1
+            && ["ontop", "inside"].indexOf(cmd.location.relation) > -1 ) || cmd.location.relation === "under")) {
+              return false;
+        // fail
+      }
+
+      switch(destObj.form) {
+        case "box":
+          if(cmd.location.relation === "ontop") {
+            console.log("Fail: Nothing can be ontop of a box.")
+            return false;
+          }
+          if(["box","pyramid","plank"].indexOf(moveObj.form) > -1 && moveObj.size === destObj.size) {
+            console.log("Fail: Boxes cannot contain pyramids, planks or boxes of the same size.");
+            return false;
+          }
+          break;
+        case "ball":
+          if(["ontop","above"].indexOf(cmd.location.relation) > -1){
+            return false;
+            // fail
+          }
+          break;
+        case "pyramid":
+          if (moveObj.form === "box" && moveObj.size === destObj.size) {
+            return false;
+            // fail
+          }
+          break;
+        case "brick":
+          if (moveObj.form === "box" && destObj.size === "small") {
+            return false;
+            // fail
+          }
+          break;
+        default:
+          break;
+      }
+      return true;
+    }
+
     // Check each object in the world, to see if it's the one that should be moved/taken.
     for (var i = 0; i < objects.length; i++) {
       var currentObject: ObjectDefinition = state.objects[objects[i]];
@@ -259,67 +319,27 @@ module Interpreter {
 
     // Now for movement. The location part of the command will be checked. The
     // location and previous matching object(s) must obey the rules of the world.
+
     if (cmd.location) {
       for(var i = 0; i < matchingObjects.length; i++) {
 
-        var moveObj : Parser.Object = matchingObjects[i];
+        var moveObj : ObjectDefinition = state.objects[matchingObjects[i]];
         var destObj : Parser.Object = cmd.location.entity.object;
-        if(moveObj.size === "large" && destObj.size === "small"
-              && ["ontop","inside","above"].indexOf(cmd.location.relation) > -1) {
-                return undefined;
-          // fail
-        } else if(moveObj.size === "small" && destObj.size === "large"
-              && cmd.location.relation === "under") {
-                return undefined;
-          // fail
-        } else if(moveObj.form === "ball" && (["floor","box"].indexOf(destObj.form) === -1
-              || cmd.location.relation === "under")) {
-                return undefined;
-          // fail
-        }
-
-        switch(destObj.form) {
-          case "box":
-            if(cmd.location.relation === "ontop") {
-              console.log("Fail: Nothing can be ontop of a box.")
-              return undefined;
+        if(isAllowed(moveObj, destObj)) {
+          for(var j = 0; j < objects.length; j++) {
+            var destObjDef : ObjectDefinition = state.objects[objects[j]];
+            if(isMatching(destObjDef, destObj)) {
+              if (matchingObjects[i] !== objects[j] && isAllowed(moveObj, destObjDef)) {
+                console.log(moveObj, destObjDef);
+                interpretation.push([
+                  { polarity: true, relation: cmd.location.relation, args: [matchingObjects[i], objects[j]] }
+                ]);
+              }
             }
-            if(["box","pyramid","plank"].indexOf(moveObj.form) > -1 && moveObj.size === destObj.size) {
-              console.log("Fail: Boxes cannot contain pyramids, planks or boxes of the same size.");
-              return undefined;
-            }
-            break;
-          case "ball":
-            if(["ontop","above"].indexOf(cmd.location.relation) > -1){
-              return undefined;
-              // fail
-            }
-            break;
-          case "pyramid":
-            if (moveObj.form === "box" && moveObj.size === destObj.size) {
-              return undefined;
-              // fail
-            }
-            break;
-          case "brick":
-            if (moveObj.form === "box" && destObj.size === "small") {
-              return undefined;
-              // fail
-            }
-            break;
-          default:
-            break;
-        }
-        for(var j = 0; j < objects.length; j++) {
-          if(isMatching(state.objects[objects[j]], destObj)) {
-            if (matchingObjects[i] !== objects[j])
-              interpretation.push([
-                { polarity: true, relation: cmd.location.relation, args: [matchingObjects[i], objects[j]] }
-              ]);
           }
+        } else {
+          return undefined;
         }
-    //    isMatching
-    //    destObj
       }
     }
     /*

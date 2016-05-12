@@ -28,26 +28,29 @@ Everything is correct!
 Testing utterance: "put a ball in a box", in world "small"
 Found 1 parses
 e,f
+{ form: 'ball', size: 'large', color: 'white' } { form: 'box', size: 'large', color: 'red' }
+{ form: 'ball', size: 'large', color: 'white' } { form: 'box', size: 'large', color: 'yellow' }
+{ form: 'ball', size: 'small', color: 'black' } { form: 'box', size: 'large', color: 'red' }
+{ form: 'ball', size: 'small', color: 'black' } { form: 'box', size: 'large', color: 'yellow' }
+{ form: 'ball', size: 'small', color: 'black' } { form: 'box', size: 'small', color: 'blue' }
 Correct interpretations:
-    No correct interpretations!
-Missing interpretations:
-    (-) inside(e,k) | inside(e,l) | inside(f,k) | inside(f,l) | inside(f,m)
-Incorrect interpretations:
-    (1) inside(e,k) | inside(e,l) | inside(e,m) | inside(f,k) | inside(f,l) | inside(f,m)
+    (1) inside(e,k) | inside(e,l) | inside(f,k) | inside(f,l) | inside(f,m)
+Everything is correct!
 
 --------------------------------------------------------------------------------
 Testing utterance: "put a ball on a table", in world "small"
 Found 1 parses
 e,f
 Correct interpretations:
-    No correct interpretations!
-Incorrect interpretations:
-    (1) ontop(e,g) | ontop(f,g)
+    There are no interpretations!
+Everything is correct!
 
 --------------------------------------------------------------------------------
 Testing utterance: "put a ball above a table", in world "small"
 Found 1 parses
 e,f
+{ form: 'ball', size: 'large', color: 'white' } { form: 'table', size: 'large', color: 'blue' }
+{ form: 'ball', size: 'small', color: 'black' } { form: 'table', size: 'large', color: 'blue' }
 Correct interpretations:
     (1) above(e,g) | above(f,g)
 Everything is correct!
@@ -57,14 +60,15 @@ Testing utterance: "put a big ball in a small box", in world "small"
 Found 1 parses
 e
 Correct interpretations:
-    No correct interpretations!
-Incorrect interpretations:
-    (1) inside(e,m)
+    There are no interpretations!
+Everything is correct!
 
 --------------------------------------------------------------------------------
 Testing utterance: "put a ball left of a ball", in world "small"
 Found 1 parses
 e,f
+{ form: 'ball', size: 'large', color: 'white' } { form: 'ball', size: 'small', color: 'black' }
+{ form: 'ball', size: 'small', color: 'black' } { form: 'ball', size: 'large', color: 'white' }
 Correct interpretations:
     (1) leftof(e,f) | leftof(f,e)
 Everything is correct!
@@ -84,6 +88,8 @@ Incorrect interpretations:
 Testing utterance: "put a white object beside a blue object", in world "small"
 Found 1 parses
 e
+{ form: 'ball', size: 'large', color: 'white' } { form: 'table', size: 'large', color: 'blue' }
+{ form: 'ball', size: 'large', color: 'white' } { form: 'box', size: 'small', color: 'blue' }
 Correct interpretations:
     (1) beside(e,g) | beside(e,m)
 Everything is correct!
@@ -98,9 +104,6 @@ Correct interpretations:
 Missing interpretations:
     (-) inside(e,k) | inside(f,k)
     (-) ontop(f,floor)
-Incorrect interpretations:
-    (1)
-    (2) inside(e,f) | inside(e,g) | inside(e,k) | inside(e,l) | inside(e,m) | inside(f,e) | inside(f,g) | inside(f,k) | inside(f,l) | inside(f,m)
 
 --------------------------------------------------------------------------------
 Testing utterance: "put a white ball in a box on the floor", in world "small"
@@ -111,9 +114,6 @@ Correct interpretations:
     No correct interpretations!
 Missing interpretations:
     (-) inside(e,k)
-Incorrect interpretations:
-    (1)
-    (2) inside(e,f) | inside(e,g) | inside(e,k) | inside(e,l) | inside(e,m)
 
 --------------------------------------------------------------------------------
 Testing utterance: "put a black ball in a box on the floor", in world "small"
@@ -125,11 +125,9 @@ Correct interpretations:
 Missing interpretations:
     (-) inside(f,k)
     (-) ontop(f,floor)
-Incorrect interpretations:
-    (1)
-    (2) inside(f,e) | inside(f,g) | inside(f,k) | inside(f,l) | inside(f,m)
 
 --------------------------------------------------------------------------------
 Summary statistics
-Passed tests: 6
-Failed tests: 7
+Passed tests: 9
+Failed tests: 4
+
