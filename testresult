@@ -3,11 +3,8 @@ node TestInterpreter.js all
 --------------------------------------------------------------------------------
 Testing utterance: "take an object", in world "small"
 Found 1 parses
-{ command: 'take',
-  entity: 
-   { quantifier: 'any',
-     object: { size: null, color: null, form: 'anyform' } } }
-[ [ { polarity: true, relation: 'holding', args: [Object] } ],
+Return size:  6
+Return value:  [ [ { polarity: true, relation: 'holding', args: [Object] } ],
   [ { polarity: true, relation: 'holding', args: [Object] } ],
   [ { polarity: true, relation: 'holding', args: [Object] } ],
   [ { polarity: true, relation: 'holding', args: [Object] } ],
@@ -20,11 +17,8 @@ Everything is correct!
 --------------------------------------------------------------------------------
 Testing utterance: "take a blue object", in world "small"
 Found 1 parses
-{ command: 'take',
-  entity: 
-   { quantifier: 'any',
-     object: { size: null, color: 'blue', form: 'anyform' } } }
-[ [ { polarity: true, relation: 'holding', args: [Object] } ],
+Return size:  2
+Return value:  [ [ { polarity: true, relation: 'holding', args: [Object] } ],
   [ { polarity: true, relation: 'holding', args: [Object] } ] ]
 Correct interpretations:
     (1) holding(g) | holding(m)
@@ -33,11 +27,8 @@ Everything is correct!
 --------------------------------------------------------------------------------
 Testing utterance: "take a box", in world "small"
 Found 1 parses
-{ command: 'take',
-  entity: 
-   { quantifier: 'any',
-     object: { size: null, color: null, form: 'box' } } }
-[ [ { polarity: true, relation: 'holding', args: [Object] } ],
+Return size:  3
+Return value:  [ [ { polarity: true, relation: 'holding', args: [Object] } ],
   [ { polarity: true, relation: 'holding', args: [Object] } ],
   [ { polarity: true, relation: 'holding', args: [Object] } ] ]
 Correct interpretations:
@@ -47,14 +38,8 @@ Everything is correct!
 --------------------------------------------------------------------------------
 Testing utterance: "put a ball in a box", in world "small"
 Found 1 parses
-{ command: 'move',
-  entity: 
-   { quantifier: 'any',
-     object: { size: null, color: null, form: 'ball' } },
-  location: 
-   { relation: 'inside',
-     entity: { quantifier: 'any', object: [Object] } } }
-[ [ { polarity: true, relation: 'inside', args: [Object] } ],
+Return size:  5
+Return value:  [ [ { polarity: true, relation: 'inside', args: [Object] } ],
   [ { polarity: true, relation: 'inside', args: [Object] } ],
   [ { polarity: true, relation: 'inside', args: [Object] } ],
   [ { polarity: true, relation: 'inside', args: [Object] } ],
@@ -66,13 +51,6 @@ Everything is correct!
 --------------------------------------------------------------------------------
 Testing utterance: "put a ball on a table", in world "small"
 Found 1 parses
-{ command: 'move',
-  entity: 
-   { quantifier: 'any',
-     object: { size: null, color: null, form: 'ball' } },
-  location: 
-   { relation: 'ontop',
-     entity: { quantifier: 'any', object: [Object] } } }
 Correct interpretations:
     There are no interpretations!
 Everything is correct!
@@ -80,14 +58,8 @@ Everything is correct!
 --------------------------------------------------------------------------------
 Testing utterance: "put a ball above a table", in world "small"
 Found 1 parses
-{ command: 'move',
-  entity: 
-   { quantifier: 'any',
-     object: { size: null, color: null, form: 'ball' } },
-  location: 
-   { relation: 'above',
-     entity: { quantifier: 'any', object: [Object] } } }
-[ [ { polarity: true, relation: 'above', args: [Object] } ],
+Return size:  2
+Return value:  [ [ { polarity: true, relation: 'above', args: [Object] } ],
   [ { polarity: true, relation: 'above', args: [Object] } ] ]
 Correct interpretations:
     (1) above(e,g) | above(f,g)
@@ -96,13 +68,6 @@ Everything is correct!
 --------------------------------------------------------------------------------
 Testing utterance: "put a big ball in a small box", in world "small"
 Found 1 parses
-{ command: 'move',
-  entity: 
-   { quantifier: 'any',
-     object: { size: 'large', color: null, form: 'ball' } },
-  location: 
-   { relation: 'inside',
-     entity: { quantifier: 'any', object: [Object] } } }
 Correct interpretations:
     There are no interpretations!
 Everything is correct!
@@ -110,14 +75,8 @@ Everything is correct!
 --------------------------------------------------------------------------------
 Testing utterance: "put a ball left of a ball", in world "small"
 Found 1 parses
-{ command: 'move',
-  entity: 
-   { quantifier: 'any',
-     object: { size: null, color: null, form: 'ball' } },
-  location: 
-   { relation: 'leftof',
-     entity: { quantifier: 'any', object: [Object] } } }
-[ [ { polarity: true, relation: 'leftof', args: [Object] } ],
+Return size:  2
+Return value:  [ [ { polarity: true, relation: 'leftof', args: [Object] } ],
   [ { polarity: true, relation: 'leftof', args: [Object] } ] ]
 Correct interpretations:
     (1) leftof(e,f) | leftof(f,e)
@@ -126,11 +85,8 @@ Everything is correct!
 --------------------------------------------------------------------------------
 Testing utterance: "take a white object beside a blue object", in world "small"
 Found 1 parses
-{ command: 'take',
-  entity: 
-   { quantifier: 'any',
-     object: { object: [Object], location: [Object] } } }
-[ [ { polarity: true, relation: 'holding', args: [Object] } ] ]
+Return size:  1
+Return value:  [ [ { polarity: true, relation: 'holding', args: [Object] } ] ]
 Correct interpretations:
     (1) holding(e)
 Everything is correct!
@@ -138,14 +94,8 @@ Everything is correct!
 --------------------------------------------------------------------------------
 Testing utterance: "put a white object beside a blue object", in world "small"
 Found 1 parses
-{ command: 'move',
-  entity: 
-   { quantifier: 'any',
-     object: { size: null, color: 'white', form: 'anyform' } },
-  location: 
-   { relation: 'beside',
-     entity: { quantifier: 'any', object: [Object] } } }
-[ [ { polarity: true, relation: 'beside', args: [Object] } ],
+Return size:  2
+Return value:  [ [ { polarity: true, relation: 'beside', args: [Object] } ],
   [ { polarity: true, relation: 'beside', args: [Object] } ] ]
 Correct interpretations:
     (1) beside(e,g) | beside(e,m)
@@ -154,22 +104,10 @@ Everything is correct!
 --------------------------------------------------------------------------------
 Testing utterance: "put a ball in a box on the floor", in world "small"
 Found 2 parses
-{ command: 'move',
-  entity: 
-   { quantifier: 'any',
-     object: { object: [Object], location: [Object] } },
-  location: 
-   { relation: 'ontop',
-     entity: { quantifier: 'the', object: [Object] } } }
-[ [ { polarity: true, relation: 'ontop', args: [Object] } ] ]
-{ command: 'move',
-  entity: 
-   { quantifier: 'any',
-     object: { size: null, color: null, form: 'ball' } },
-  location: 
-   { relation: 'inside',
-     entity: { quantifier: 'any', object: [Object] } } }
-[ [ { polarity: true, relation: 'inside', args: [Object] } ],
+Return size:  1
+Return value:  [ [ { polarity: true, relation: 'ontop', args: [Object] } ] ]
+Return size:  2
+Return value:  [ [ { polarity: true, relation: 'inside', args: [Object] } ],
   [ { polarity: true, relation: 'inside', args: [Object] } ] ]
 Correct interpretations:
     (1) inside(e,k) | inside(f,k)
@@ -179,46 +117,20 @@ Everything is correct!
 --------------------------------------------------------------------------------
 Testing utterance: "put a white ball in a box on the floor", in world "small"
 Found 2 parses
-{ command: 'move',
-  entity: 
-   { quantifier: 'any',
-     object: { object: [Object], location: [Object] } },
-  location: 
-   { relation: 'ontop',
-     entity: { quantifier: 'the', object: [Object] } } }
-[]
-{ command: 'move',
-  entity: 
-   { quantifier: 'any',
-     object: { size: null, color: 'white', form: 'ball' } },
-  location: 
-   { relation: 'inside',
-     entity: { quantifier: 'any', object: [Object] } } }
-[ [ { polarity: true, relation: 'inside', args: [Object] } ] ]
+Return size:  1
+Return value:  [ [ { polarity: true, relation: 'inside', args: [Object] } ] ]
 Correct interpretations:
-    (1) inside(e,k)
-Incorrect interpretations:
-    (2) 
+    No correct interpretations!
+Missing interpretations:
+    (-) inside(e,k)
 
 --------------------------------------------------------------------------------
 Testing utterance: "put a black ball in a box on the floor", in world "small"
 Found 2 parses
-{ command: 'move',
-  entity: 
-   { quantifier: 'any',
-     object: { object: [Object], location: [Object] } },
-  location: 
-   { relation: 'ontop',
-     entity: { quantifier: 'the', object: [Object] } } }
-[ [ { polarity: true, relation: 'ontop', args: [Object] } ] ]
-{ command: 'move',
-  entity: 
-   { quantifier: 'any',
-     object: { size: null, color: 'black', form: 'ball' } },
-  location: 
-   { relation: 'inside',
-     entity: { quantifier: 'any', object: [Object] } } }
-[ [ { polarity: true, relation: 'inside', args: [Object] } ] ]
+Return size:  1
+Return value:  [ [ { polarity: true, relation: 'ontop', args: [Object] } ] ]
+Return size:  1
+Return value:  [ [ { polarity: true, relation: 'inside', args: [Object] } ] ]
 Correct interpretations:
     (1) inside(f,k)
     (2) ontop(f,floor)

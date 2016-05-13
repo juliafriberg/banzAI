@@ -111,8 +111,6 @@ module Interpreter {
     // The interpetation to return. Will be filled when applicable.
     var interpretation: DNFFormula = [];
 
-    console.log(cmd);
-
     /**
     * Internal function used to compare an object to a description.
     * @param currentObject The object to be compared.
@@ -120,8 +118,8 @@ module Interpreter {
     * @returns True if currentObject matches the description in object.
     */
     function isMatching(currentObject: ObjectDefinition, prelObject: Parser.Object): boolean {
-      var object : Parser.Object;
-      if(prelObject.object) {
+      var object: Parser.Object;
+      if (prelObject.object) {
         object = prelObject.object;
       } else {
         object = prelObject;
@@ -129,13 +127,13 @@ module Interpreter {
 
       if (object.form !== "anyform" && object.form) {
         if (currentObject.form !== object.form) {
-        //  console.log("form doesn't match " + currentObject.form + " " + object.form)
+          //  console.log("form doesn't match " + currentObject.form + " " + object.form)
           return false;
         }
       }
       if (object.size) {
         if (currentObject.size !== object.size) {
-        //  console.log("size doesn't match " + currentObject.size + " " + object.size)
+          //  console.log("size doesn't match " + currentObject.size + " " + object.size)
           return false;
         }
       }
@@ -148,119 +146,125 @@ module Interpreter {
       return true;
     }
 
-    function relationMatching(relation : string, object : Parser.Object, stacknumber : number, objectnumber : number) : boolean {
+    // location and object from cmd. numbers for object to match (?)
+    function findMatch(location: Parser.Location, objInWorld: string): boolean {
       // Checking for matches in the different possible relations. If the
       // object matches any of the relations and the correct relating object,
       // the foundMatch variable will be set to true.
-      switch (relation) {
-        case "inside":
-          //console.log("inside");
-          if (objectnumber > 0) {
-            if (isMatching(state.objects[state.stacks[stacknumber][objectnumber - 1]], object)) {
-              return true;
-            }
-          }
-          break;
-        case "above":
-          //console.log("above");
-          for (var j = objectnumber; j < state.stacks[stacknumber].length; j++) {
-            if (isMatching(state.objects[state.stacks[stacknumber][j]], object)) {
-              return true;
-            }
-          }
-          break;
-        case "ontop":
-          //console.log("ontop");
-          if (objectnumber < state.stacks[stacknumber].length - 1) {
-            if (isMatching(state.objects[state.stacks[stacknumber][objectnumber + 1]], object)) {
-              return true;
-            }
-          }
-          break;
-        case "toleft":
-          //console.log("toleft");
-          for (var j = 0; j < stacknumber; j++) {
-            for (var k = 0; k < state.stacks[j].length; k++) {
-              if (isMatching(state.objects[state.stacks[j][k]], object)) {
-                return true;
-              }
-            }
-          }
-          break;
-        case "toright":
-          //console.log("toright");
-          for (var j = stacknumber; j >= 0; j--) {
-            for (var k = 0; k < state.stacks[j].length; k++) {
-              if (isMatching(state.objects[state.stacks[j][k]], object)) {
-                return true;
-              }
-            }
-          }
-          break;
-        case "beside":
-          if (stacknumber > 0) {
-            var leftStack: Stack = state.stacks[stacknumber - 1];
-            for (var j = 0; j < leftStack.length; j++) {
-              if (isMatching(state.objects[leftStack[j]], object)) {
-                return true;
-              }
-            }
-          }
 
-          if (stacknumber < state.stacks.length - 1) {
-            var rightStack: Stack = state.stacks[stacknumber + 1];
-            for (var j = 0; j < rightStack.length; j++) {
-              if (isMatching(state.objects[rightStack[j]], object)) {
-                return true;
-              }
-            }
-          }
-          break;
-        case "under":
-          //console.log("under");
-          for (var j = 0; j < objectnumber; j++) {
-            if (isMatching(state.objects[state.stacks[stacknumber][j]], object)) {
-              return true;
-            }
-          }
-          break;
-        default:
-          break;
-
-      }
-      return false;
-
-    }
-
-    function findMatch(location : Parser.Location, object : string) : boolean {
-      // If the object is referenced by location, e.g. object inside a box, the
-      // following code block checks which ones still match.
       if (location) {
-        // stacknumber: which stack the current object is in.
-        // objectnumber: where in the stack the object is.
-        var stacknumber: number = 0;
-        var objectnumber: number = 0;
-        for (var j = 0; j < state.stacks.length; j++) {
-          objectnumber = state.stacks[j].indexOf(object);
-          if (objectnumber > -1) {
-            stacknumber = j;
-            break;
-          }
-        }
+        var pos: number[] = getPosition(objInWorld);
+        var object : Parser.Object = location.entity.object;
+        var objectnumber: number = pos[1];
+        var stacknumber: number = pos[0];
 
-        return relationMatching(location.relation, location.entity.object, stacknumber, objectnumber);
+        switch (location.relation) {
+          case "inside":
+            //console.log("inside");
+            if (objectnumber > 0) {
+              if (isMatching(state.objects[state.stacks[stacknumber][objectnumber - 1]], object)) {
+                return true;
+              }
+            }
+            break;
+          case "above":
+            //console.log("above");
+            for (var j = objectnumber; j < state.stacks[stacknumber].length; j++) {
+              if (isMatching(state.objects[state.stacks[stacknumber][j]], object)) {
+                return true;
+              }
+            }
+            break;
+          case "ontop":
+            //console.log("ontop");
+            if (objectnumber < state.stacks[stacknumber].length - 1) {
+              if (isMatching(state.objects[state.stacks[stacknumber][objectnumber + 1]], object)) {
+                return true;
+              }
+            }
+            break;
+          case "toleft":
+            //console.log("toleft");
+            for (var j = 0; j < stacknumber; j++) {
+              for (var k = 0; k < state.stacks[j].length; k++) {
+                if (isMatching(state.objects[state.stacks[j][k]], object)) {
+                  return true;
+                }
+              }
+            }
+            break;
+          case "toright":
+            //console.log("toright");
+            for (var j = stacknumber; j >= 0; j--) {
+              for (var k = 0; k < state.stacks[j].length; k++) {
+                if (isMatching(state.objects[state.stacks[j][k]], object)) {
+                  return true;
+                }
+              }
+            }
+            break;
+          case "beside":
+            if (stacknumber > 0) {
+              var leftStack: Stack = state.stacks[stacknumber - 1];
+              for (var j = 0; j < leftStack.length; j++) {
+                if (isMatching(state.objects[leftStack[j]], object)) {
+                  return true;
+                }
+              }
+            }
+
+            if (stacknumber < state.stacks.length - 1) {
+              var rightStack: Stack = state.stacks[stacknumber + 1];
+              for (var j = 0; j < rightStack.length; j++) {
+                if (isMatching(state.objects[rightStack[j]], object)) {
+                  return true;
+                }
+              }
+            }
+            break;
+          case "under":
+            //console.log("under");
+            for (var j = 0; j < objectnumber; j++) {
+              if (isMatching(state.objects[state.stacks[stacknumber][j]], object)) {
+                return true;
+              }
+            }
+            break;
+          default:
+            break;
+
+        }
+        return false;
       } else {
         return true;
       }
     }
 
-    function isAllowed(moveObj: ObjectDefinition, destObjParser?: Parser.Object, destObjDef?: ObjectDefinition) : boolean {
-      var destObj : any;
+    // Returns a list of two numbers.
+    // First number is stacknumber. Which stack the object is in.
+    // Second is object number. Position in the specific stack.
+    function getPosition(object: string): number[] {
+      var stacknumber: number = 0;
+      var objectnumber: number = 0;
+      for (var j = 0; j < state.stacks.length; j++) {
+        objectnumber = state.stacks[j].indexOf(object);
+        if (objectnumber > -1) {
+          stacknumber = j;
+          break;
+        }
+      }
+      return [stacknumber, objectnumber];
+    }
 
-      if(destObjDef) {
+    // Function making sure the physical laws of the world are followed.
+    function isAllowed(moveObj: ObjectDefinition, destObjParser?: Parser.Object, destObjDef?: ObjectDefinition): boolean {
+      var destObj: any;
+
+      // Either Parser.Object or ObjectDefinition is used in this function.
+      if (destObjDef) {
         destObj = destObjDef;
-      } else if(destObjParser) {
-        if(destObjParser.object) {
+      } else if (destObjParser) {
+        if (destObjParser.object) {
           destObj = destObjParser.object;
         } else {
           destObj = destObjParser;
@@ -269,33 +273,33 @@ module Interpreter {
         return false;
       }
 
-      if(moveObj.size === "large" && destObj.size === "small"
-            && ["ontop","inside","above"].indexOf(cmd.location.relation) > -1) {
-              return false;
+      if (moveObj.size === "large" && destObj.size === "small"
+        && ["ontop", "inside", "above"].indexOf(cmd.location.relation) > -1) {
+        return false;
         // fail
-      } else if(moveObj.size === "small" && destObj.size === "large"
-            && cmd.location.relation === "under") {
-              return false;
+      } else if (moveObj.size === "small" && destObj.size === "large"
+        && cmd.location.relation === "under") {
+        return false;
         // fail
-      } else if(moveObj.form === "ball" && ((["floor","box"].indexOf(destObj.form) === -1
-            && ["ontop", "inside"].indexOf(cmd.location.relation) > -1 ) || cmd.location.relation === "under")) {
-              return false;
+      } else if (moveObj.form === "ball" && ((["floor", "box"].indexOf(destObj.form) === -1
+        && ["ontop", "inside"].indexOf(cmd.location.relation) > -1) || cmd.location.relation === "under")) {
+        return false;
         // fail
       }
 
-      switch(destObj.form) {
+      switch (destObj.form) {
         case "box":
-          if(cmd.location.relation === "ontop") {
+          if (cmd.location.relation === "ontop") {
             console.log("Fail: Nothing can be ontop of a box.")
             return false;
           }
-          if(["box","pyramid","plank"].indexOf(moveObj.form) > -1 && moveObj.size === destObj.size) {
+          if (["box", "pyramid", "plank"].indexOf(moveObj.form) > -1 && moveObj.size === destObj.size) {
             console.log("Fail: Boxes cannot contain pyramids, planks or boxes of the same size.");
             return false;
           }
           break;
         case "ball":
-          if(["ontop","above"].indexOf(cmd.location.relation) > -1){
+          if (["ontop", "above"].indexOf(cmd.location.relation) > -1) {
             return false;
             // fail
           }
@@ -324,53 +328,46 @@ module Interpreter {
       // First check it it's matching the description, e.g. large and blue.
       if (!isMatching(currentObject, cmd.entity.object)) continue;
 
-
       // If the item is still matching the description of what to be picked
       // up, it is added to the array of matching objects.
       if (findMatch(cmd.entity.object.location, objects[i])) matchingObjects.push(objects[i]);
     }
 
+    // No matching object found.
+    if (matchingObjects.length === 0) { return undefined; }
 
     // Now for movement. The location part of the command will be checked. The
     // location and previous matching object(s) must obey the rules of the world.
-
     if (cmd.location) {
-      for(var i = 0; i < matchingObjects.length; i++) {
+      for (var i = 0; i < matchingObjects.length; i++) {
 
-        var moveObj : ObjectDefinition = state.objects[matchingObjects[i]];
-        var destObj : Parser.Object = cmd.location.entity.object;
-        if(isAllowed(moveObj, destObj)) {
-          if(destObj.form !== "floor") {
-            for(var j = 0; j < objects.length; j++) {
-              var destObjDef : ObjectDefinition = state.objects[objects[j]];
-              if(isMatching(destObjDef, destObj)) {
-                var foundMatch : boolean;
-                if (matchingObjects[i] !== objects[j] && isAllowed(moveObj, destObjDef)
-                    && findMatch(cmd.entity.object.location, objects[j])) {
+        // Object to be moved.
+        var moveObj: ObjectDefinition = state.objects[matchingObjects[i]];
+        // Object that the move object is supposed to be moved to/beside/etc
+        var destObj: Parser.Object = cmd.location.entity.object;
 
-                  if(destObj.location) {
+        if (isAllowed(moveObj, destObj)) {
+          if (destObj.form !== "floor") {
+            for (var j = 0; j < objects.length; j++) {
+              var objInWorld: ObjectDefinition = state.objects[objects[j]];
+              if (isMatching(objInWorld, destObj)) {
+                var foundMatch: boolean;
+                if (matchingObjects[i] !== objects[j] && isAllowed(moveObj, objInWorld)
+                  && findMatch(cmd.entity.object.location, objects[j])) {
 
-                    for(var k = 0; k < objects.length; k++) {
-                      if(destObj.location.entity.object.form !== "floor") {
+                  if (destObj.location) {
+                    for (var k = 0; k < objects.length; k++) {
+                      if (destObj.location.entity.object.form !== "floor") {
                         foundMatch = isMatching(state.objects[objects[k]], destObj.location.entity.object);
                       } else {
-                        var objectnumber : number;
-                        for (var l = 0; l < state.stacks.length; l++) {
-                          objectnumber = state.stacks[l].indexOf(objects[j]);
-                          if (objectnumber > -1) {
-                            break;
-                          }
-                        }
-                        foundMatch = objectnumber === 0;
+                        foundMatch = getPosition(objects[j])[1] === 0;
                       }
-                      if(foundMatch) break;
+                      if (foundMatch) break;
                     }
-
-
-                  }else{
+                  } else {
                     foundMatch = true;
                   }
-                  if(foundMatch) {
+                  if (foundMatch) {
                     interpretation.push([
                       { polarity: true, relation: cmd.location.relation, args: [matchingObjects[i], objects[j]] }
                     ]);
@@ -378,12 +375,10 @@ module Interpreter {
                 }
               }
             }
-          } else {
-            if(!destObj.location) {
-              interpretation.push([
-                { polarity: true, relation: cmd.location.relation, args: [matchingObjects[i], "floor"] }
-              ]);
-            }
+          } else { // Is floor
+            interpretation.push([
+              { polarity: true, relation: cmd.location.relation, args: [matchingObjects[i], "floor"] }
+            ]);
           }
         } else {
           return undefined;
@@ -401,9 +396,12 @@ module Interpreter {
       }
     }
 
+    var s: number = interpretation.length;
+    console.log("Return size: ", s);
+    console.log("Return value: ", interpretation)
 
-    console.log(interpretation);
+    //if (s !== 0)
     return interpretation;
+    //return undefined;
   }
-
 }
