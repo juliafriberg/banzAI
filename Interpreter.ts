@@ -106,16 +106,13 @@ module Interpreter {
    * @returns A list of list of Literal, representing a formula in disjunctive normal form (disjunction of conjunctions). See the dummy interpetation returned in the code for an example, which means ontop(a,floor) AND holding(b).
    */
   function interpretCommand(cmd: Parser.Command, state: WorldState): DNFFormula {
-    var objects: string[] = Array.prototype.concat.apply([], state.stacks);
-    var matchingObjects: string[] = [];
-    // The interpetation to return. Will be filled when applicable.
-    var interpretation: DNFFormula = [];
+    // First few useful functions are defined.
 
     /**
     * Internal function used to compare an object to a description.
     * @param currentObject The object to be compared.
-    * @param object An object description. Can contain color, size and/or form.
-    * @returns True if currentObject matches the description in object.
+    * @param prelObject An object description. Can contain color, size and/or form.
+    * @returns True if currentObject matches the description in prelObject.
     */
     function isMatching(currentObject: ObjectDefinition, prelObject: Parser.Object): boolean {
       var object: Parser.Object;
@@ -127,26 +124,27 @@ module Interpreter {
 
       if (object.form !== "anyform" && object.form) {
         if (currentObject.form !== object.form) {
-          //  console.log("form doesn't match " + currentObject.form + " " + object.form)
           return false;
         }
       }
       if (object.size) {
         if (currentObject.size !== object.size) {
-          //  console.log("size doesn't match " + currentObject.size + " " + object.size)
           return false;
         }
       }
       if (object.color) {
         if (currentObject.color !== object.color) {
-          //console.log("color doesn't match " + currentObject.color + " " + object.color)
           return false;
         }
       }
       return true;
     }
 
-    // location and object from cmd. numbers for object to match (?)
+    /**
+    * @param location The location from the command, containing the object description.
+    * @param objInWorld The object in the world to match against.
+    * @returns True if the object in the command location matches the object in the world, or if there is no location in the command.
+    */
     function findMatch(location: Parser.Location, objInWorld: string): boolean {
       // Checking for matches in the different possible relations. If the
       // object matches any of the relations and the correct relating object,
@@ -154,13 +152,12 @@ module Interpreter {
 
       if (location) {
         var pos: number[] = getPosition(objInWorld);
-        var object : Parser.Object = location.entity.object;
+        var object: Parser.Object = location.entity.object;
         var objectnumber: number = pos[1];
         var stacknumber: number = pos[0];
 
         switch (location.relation) {
           case "inside":
-            //console.log("inside");
             if (objectnumber > 0) {
               if (isMatching(state.objects[state.stacks[stacknumber][objectnumber - 1]], object)) {
                 return true;
@@ -168,7 +165,6 @@ module Interpreter {
             }
             break;
           case "above":
-            //console.log("above");
             for (var j = objectnumber; j < state.stacks[stacknumber].length; j++) {
               if (isMatching(state.objects[state.stacks[stacknumber][j]], object)) {
                 return true;
@@ -176,7 +172,6 @@ module Interpreter {
             }
             break;
           case "ontop":
-            //console.log("ontop");
             if (objectnumber < state.stacks[stacknumber].length - 1) {
               if (isMatching(state.objects[state.stacks[stacknumber][objectnumber + 1]], object)) {
                 return true;
@@ -184,7 +179,6 @@ module Interpreter {
             }
             break;
           case "toleft":
-            //console.log("toleft");
             for (var j = 0; j < stacknumber; j++) {
               for (var k = 0; k < state.stacks[j].length; k++) {
                 if (isMatching(state.objects[state.stacks[j][k]], object)) {
@@ -194,7 +188,6 @@ module Interpreter {
             }
             break;
           case "toright":
-            //console.log("toright");
             for (var j = stacknumber; j >= 0; j--) {
               for (var k = 0; k < state.stacks[j].length; k++) {
                 if (isMatching(state.objects[state.stacks[j][k]], object)) {
@@ -223,16 +216,12 @@ module Interpreter {
             }
             break;
           case "under":
-            //console.log("under");
             for (var j = 0; j < objectnumber; j++) {
               if (isMatching(state.objects[state.stacks[stacknumber][j]], object)) {
                 return true;
               }
             }
             break;
-          default:
-            break;
-
         }
         return false;
       } else {
@@ -240,9 +229,11 @@ module Interpreter {
       }
     }
 
-    // Returns a list of two numbers.
-    // First number is stacknumber. Which stack the object is in.
-    // Second is object number. Position in the specific stack.
+    /**
+    *
+    * @param object The object to find the position of.
+    * @returns Two numbers; which stack the object is in, and where in the stack it is.
+    */
     function getPosition(object: string): number[] {
       var stacknumber: number = 0;
       var objectnumber: number = 0;
@@ -256,64 +247,57 @@ module Interpreter {
       return [stacknumber, objectnumber];
     }
 
-    // Function making sure the physical laws of the world are followed.
-    function isAllowed(moveObj: ObjectDefinition, destObjParser?: Parser.Object, destObjDef?: ObjectDefinition): boolean {
-      var destObj: any;
-
-      // Either Parser.Object or ObjectDefinition is used in this function.
-      if (destObjDef) {
-        destObj = destObjDef;
-      } else if (destObjParser) {
-        if (destObjParser.object) {
-          destObj = destObjParser.object;
-        } else {
-          destObj = destObjParser;
-        }
-      } else {
-        return false;
-      }
-
+    /**
+    * @param moveObj Object that is set to be moved.
+    * @param destObj Object that moveObj is set to be placed in relation to.
+    * @returns True if the placement of moveObj complies with the physical laws of the world.
+    */
+    function isAllowed(moveObj: ObjectDefinition, destObj: ObjectDefinition): boolean {
       if (moveObj.size === "large" && destObj.size === "small"
         && ["ontop", "inside", "above"].indexOf(cmd.location.relation) > -1) {
+        // Small objects cannot support large objects.
         return false;
-        // fail
+
       } else if (moveObj.size === "small" && destObj.size === "large"
         && cmd.location.relation === "under") {
+        // Small objects cannot support large objects.
         return false;
-        // fail
+
       } else if (moveObj.form === "ball" && ((["floor", "box"].indexOf(destObj.form) === -1
         && ["ontop", "inside"].indexOf(cmd.location.relation) > -1) || cmd.location.relation === "under")) {
+        // Balls must be in boxes or on the floor, otherwise they roll away.
+        // Balls cannot support anything.
         return false;
-        // fail
       }
 
       switch (destObj.form) {
         case "box":
           if (cmd.location.relation === "ontop") {
-            console.log("Fail: Nothing can be ontop of a box.")
+            // Objects are “inside” boxes, but “ontop” of other objects.
             return false;
           }
           if (["box", "pyramid", "plank"].indexOf(moveObj.form) > -1 && moveObj.size === destObj.size) {
-            console.log("Fail: Boxes cannot contain pyramids, planks or boxes of the same size.");
+            // Boxes cannot contain pyramids, planks or boxes of the same size.
             return false;
           }
           break;
         case "ball":
           if (["ontop", "above"].indexOf(cmd.location.relation) > -1) {
+            // Balls cannot support anything.
             return false;
-            // fail
           }
           break;
         case "pyramid":
           if (moveObj.form === "box" && moveObj.size === destObj.size) {
+            // Small boxes cannot be supported by small bricks or pyramids.
+            // Large boxes cannot be supported by large pyramids.
             return false;
-            // fail
           }
           break;
         case "brick":
           if (moveObj.form === "box" && destObj.size === "small") {
+            // Small boxes cannot be supported by small bricks or pyramids.
             return false;
-            // fail
           }
           break;
         default:
@@ -322,7 +306,13 @@ module Interpreter {
       return true;
     }
 
-    // Check each object in the world, to see if it's the one that should be moved/taken.
+    var objects: string[] = Array.prototype.concat.apply([], state.stacks);
+    var matchingObjects: string[] = [];
+
+    // The interpetation to return. Will be filled when applicable.
+    var interpretation: DNFFormula = [];
+
+    // Check each object in the world, to see which of the objects could be moved/taken.
     for (var i = 0; i < objects.length; i++) {
       var currentObject: ObjectDefinition = state.objects[objects[i]];
       // First check it it's matching the description, e.g. large and blue.
@@ -333,47 +323,51 @@ module Interpreter {
       if (findMatch(cmd.entity.object.location, objects[i])) matchingObjects.push(objects[i]);
     }
 
-    var matchingDestObj : string[] = [];
+    // Find all objects which the object to be moved can be moved in relation to. (destination object)
+    var matchingDestObj: string[] = [];
     if (cmd.location) {
-      for(var i = 0; i < objects.length; i++) {
-        var destObj : ObjectDefinition = state.objects[objects[i]];
+      for (var i = 0; i < objects.length; i++) {
+        var destObj: ObjectDefinition = state.objects[objects[i]];
+        // First check it it's matching the description, e.g. large and blue.
+        if (!isMatching(destObj, cmd.location.entity.object)) continue;
 
-        if(!isMatching(destObj, cmd.location.entity.object)) continue;
-
-        if(cmd.location.entity.object.location) {
-          if(cmd.location.entity.object.location.entity.object.form !== "floor") {
-            if(findMatch(cmd.location.entity.object.location, objects[i])) matchingDestObj.push(objects[i]);
+        // If the destination object has a location, check if that also matches.
+        if (cmd.location.entity.object.location) {
+          // Floor is special..
+          if (cmd.location.entity.object.location.entity.object.form !== "floor") {
+            if (findMatch(cmd.location.entity.object.location, objects[i])) matchingDestObj.push(objects[i]);
             continue;
           } else {
-            if(getPosition(objects[i])[1] === 0) matchingDestObj.push(objects[i]);
+            // if getPosition()[1] === 0, then the object is on the floor (bottom of the stack).
+            if (getPosition(objects[i])[1] === 0) matchingDestObj.push(objects[i]);
             continue;
           }
+        } else {
+          // If there is no specific location of the destination object, add it.
+          matchingDestObj.push(objects[i]);
         }
-        matchingDestObj.push(objects[i]);
-
       }
 
-
-
-      for(var i = 0; i < matchingObjects.length; i++) {
+      for (var i = 0; i < matchingObjects.length; i++) {
         var moveObj = state.objects[matchingObjects[i]];
-        if(cmd.location.entity.object.form === "floor") {
+        // if the destination is the floor, it always works. Also, floor is special.
+        if (cmd.location.entity.object.form === "floor") {
           interpretation.push([
             { polarity: true, relation: cmd.location.relation, args: [matchingObjects[i], "floor"] }
           ]);
         } else {
-        for(var j = 0; j < matchingDestObj.length; j++) {
-          var destObj = state.objects[matchingDestObj[j]];
-
-          if(isAllowed(moveObj, destObj) && matchingObjects[i] !== matchingDestObj[j]) {
-            interpretation.push([
-              { polarity: true, relation: cmd.location.relation, args: [matchingObjects[i], matchingDestObj[j]] }
-            ]);
+          // If destination is not floor, check each matching destination object against the laws.
+          for (var j = 0; j < matchingDestObj.length; j++) {
+            var destObj = state.objects[matchingDestObj[j]];
+            if (isAllowed(moveObj, destObj) && matchingObjects[i] !== matchingDestObj[j]) {
+              interpretation.push([
+                { polarity: true, relation: cmd.location.relation, args: [matchingObjects[i], matchingDestObj[j]] }
+              ]);
+            }
           }
         }
       }
     }
-  }
 
 
     // If the command is to take, each object still matching is added to
@@ -385,6 +379,7 @@ module Interpreter {
       }
     }
 
+    // If there's no interpetation, throw error.
     if (interpretation.length) {
       return interpretation;
     } else {
