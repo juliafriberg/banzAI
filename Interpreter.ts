@@ -333,58 +333,47 @@ module Interpreter {
       if (findMatch(cmd.entity.object.location, objects[i])) matchingObjects.push(objects[i]);
     }
 
-    // No matching object found.
-    if (matchingObjects.length === 0) { return undefined; }
-
-    // Now for movement. The location part of the command will be checked. The
-    // location and previous matching object(s) must obey the rules of the world.
+    var matchingDestObj : string[] = [];
     if (cmd.location) {
-      for (var i = 0; i < matchingObjects.length; i++) {
+      for(var i = 0; i < objects.length; i++) {
+        var destObj : ObjectDefinition = state.objects[objects[i]];
 
-        // Object to be moved.
-        var moveObj: ObjectDefinition = state.objects[matchingObjects[i]];
-        // Object that the move object is supposed to be moved to/beside/etc
-        var destObj: Parser.Object = cmd.location.entity.object;
+        if(!isMatching(destObj, cmd.location.entity.object)) continue;
 
-        if (isAllowed(moveObj, destObj)) {
-          if (destObj.form !== "floor") {
-            for (var j = 0; j < objects.length; j++) {
-              var objInWorld: ObjectDefinition = state.objects[objects[j]];
-              if (isMatching(objInWorld, destObj)) {
-                var foundMatch: boolean;
-                if (matchingObjects[i] !== objects[j] && isAllowed(moveObj, objInWorld)
-                  && findMatch(cmd.entity.object.location, objects[j])) {
+        if(cmd.location.entity.object.location) {
+          if(cmd.location.entity.object.location.entity.object.form !== "floor") {
+            if(findMatch(cmd.location.entity.object.location, objects[i])) matchingDestObj.push(objects[i]);
+            continue;
+          } else {
+            if(getPosition(objects[i])[1] === 0) matchingDestObj.push(objects[i]);
+            continue;
+          }
+        }
+        matchingDestObj.push(objects[i]);
 
-                  if (destObj.location) {
-                    for (var k = 0; k < objects.length; k++) {
-                      if (destObj.location.entity.object.form !== "floor") {
-                        foundMatch = isMatching(state.objects[objects[k]], destObj.location.entity.object);
-                      } else {
-                        foundMatch = getPosition(objects[j])[1] === 0;
-                      }
-                      if (foundMatch) break;
-                    }
-                  } else {
-                    foundMatch = true;
-                  }
-                  if (foundMatch) {
-                    interpretation.push([
-                      { polarity: true, relation: cmd.location.relation, args: [matchingObjects[i], objects[j]] }
-                    ]);
-                  }
-                }
-              }
-            }
-          } else { // Is floor
+      }
+
+
+
+      for(var i = 0; i < matchingObjects.length; i++) {
+        var moveObj = state.objects[matchingObjects[i]];
+        if(cmd.location.entity.object.form === "floor") {
+          interpretation.push([
+            { polarity: true, relation: cmd.location.relation, args: [matchingObjects[i], "floor"] }
+          ]);
+        } else {
+        for(var j = 0; j < matchingDestObj.length; j++) {
+          var destObj = state.objects[matchingDestObj[j]];
+
+          if(isAllowed(moveObj, destObj) && matchingObjects[i] !== matchingDestObj[j]) {
             interpretation.push([
-              { polarity: true, relation: cmd.location.relation, args: [matchingObjects[i], "floor"] }
+              { polarity: true, relation: cmd.location.relation, args: [matchingObjects[i], matchingDestObj[j]] }
             ]);
           }
-        } else {
-          return undefined;
         }
       }
     }
+  }
 
 
     // If the command is to take, each object still matching is added to
@@ -396,12 +385,10 @@ module Interpreter {
       }
     }
 
-    var s: number = interpretation.length;
-    console.log("Return size: ", s);
-    console.log("Return value: ", interpretation)
-
-    //if (s !== 0)
-    return interpretation;
-    //return undefined;
+    if (interpretation.length) {
+      return interpretation;
+    } else {
+      throw new Error();
+    }
   }
 }
