@@ -119,7 +119,7 @@ module Interpreter {
     * @param elem The element that might exists in arr.
     * @returns True if the array contains the element.
     */
-    function contains<T>(arr : T[], elem : T) {
+    function contains<T>(arr: T[], elem: T) {
       return arr.indexOf(elem) > -1;
     }
 
@@ -147,20 +147,29 @@ module Interpreter {
     * @returns A list of strings, representing objects in the world.
     */
     function interpretObject(object: Parser.Object): string[] {
+      var returnObjects: string[] = [];
       // if there's an object.object, there's also an object.location
       if (object.object) {
         // objects matching and locations matching, the intersection are the objects.
         var matchObjects: string[] = interpretObject(object.object);
         var locObjects: string[] = interpretLocation(object.location);
-        matchObjects.filter(function(n) {
+        // Intersection function, might not work.
+        returnObjects = matchObjects.filter(function(n) {
           return contains(locObjects, n); //.indexOf(n) != -1;
         });
       } else {
         // There's color/size/form. match against objects in the world.
-        // loop through world and use isMatching
+        if (object.form === "floor") {
+          returnObjects.push("floor");
+        } else {
+          for (var i = 0; i < objects.length; i++) {
+            if (isMatching(state.objects[objects[i]], object)) {
+              returnObjects.push(objects[i]);
+            }
+          }
+        }
       }
-
-      return [];
+      return returnObjects;
     }
 
     /**
@@ -170,9 +179,63 @@ module Interpreter {
     */
     function interpretLocation(location: Parser.Location): string[] {
       // find _entites_ in correct _relation_
-      var entityObjs : string[] = interpretEntity(location.entity);
+      var entityObjs: string[] = interpretEntity(location.entity);
       // for each object in entityObjs, add relating objects to return value.
-      return [];
+      var returnObjects: string[] = [];
+
+      for (var i = 0; i < entityObjs.length; i++) {
+        // pos[0] is stacknumber, pos[1] is number in stack
+        var pos: number[] = getPosition(entityObjs[i]);
+        switch (location.relation) {
+          case "ontop":
+          case "inside":
+            // if there's an object just above the current one in the stack, add it.
+            var potential = state.stacks[pos[0]][pos[1] + 1];
+            if (potential) {
+              returnObjects.push(potential);
+            }
+            break;
+
+          case "above":
+            // add each object above the entityObj to returnObjects.
+            var aboveObjs = state.stacks[pos[0]].slice(pos[1] + 1);
+            for (let o in aboveObjs) {
+              returnObjects.push(aboveObjs[o]);
+            }
+            break;
+          case "under":
+            var underObjs = state.stacks[pos[0]].slice(0, pos[1]);
+            for (let o in underObjs) {
+              returnObjects.push(underObjs[o]);
+            }
+            break;
+
+          case "right of":
+            var rightObjs = state.stacks[pos[0] + 1];
+            for (let o in rightObjs) {
+              returnObjects.push(rightObjs[o]);
+            }
+            break;
+          case "left of":
+            var leftObjs = state.stacks[pos[0] - 1];
+            for (let o in leftObjs) {
+              returnObjects.push(leftObjs[o]);
+            }
+            break;
+          case "beside":
+            // Left of and right of combined
+            var leftObjs = state.stacks[pos[0] - 1];
+            var rightObjs = state.stacks[pos[0] + 1];
+            for (let o in leftObjs) {
+              returnObjects.push(leftObjs[o]);
+            }
+            for (let o in rightObjs) {
+              returnObjects.push(rightObjs[o]);
+            }
+            break;
+        }
+      }
+      return returnObjects;
     }
 
     /**
@@ -182,7 +245,7 @@ module Interpreter {
     */
     function interpretEntity(entity: Parser.Entity): string[] {
       // an entity is right now just an object. Might implement quantifiers later.
-      var matching : string[] = interpretObject(entity.object);
+      var matching: string[] = interpretObject(entity.object);
       return matching;
     }
 
@@ -214,112 +277,33 @@ module Interpreter {
     }
 
     /**
-    * @param location The location from the command, containing the object description.
-    * @param objInWorld The object in the world to match against.
-    * @returns True if the object in the command location matches the object in the world, or if there is no location in the command.
-    */
-    function findMatch(location: Parser.Location, objInWorld: string): boolean {
-      // Checking for matches in the different possible relations. If the
-      // object matches any of the relations and the correct relating object,
-      // the foundMatch variable will be set to true.
-
-      if (location) {
-        var pos: number[] = getPosition(objInWorld);
-        var object: Parser.Object = location.entity.object;
-        var objectnumber: number = pos[1];
-        var stacknumber: number = pos[0];
-
-        switch (location.relation) {
-          case "inside":
-            if (objectnumber > 0) {
-              if (isMatching(state.objects[state.stacks[stacknumber][objectnumber - 1]], object)) {
-                return true;
-              }
-            }
-            break;
-          case "above":
-            for (var j = objectnumber; j < state.stacks[stacknumber].length; j++) {
-              if (isMatching(state.objects[state.stacks[stacknumber][j]], object)) {
-                return true;
-              }
-            }
-            break;
-          case "ontop":
-            if (objectnumber < state.stacks[stacknumber].length - 1) {
-              if (isMatching(state.objects[state.stacks[stacknumber][objectnumber + 1]], object)) {
-                return true;
-              }
-            }
-            break;
-          case "toleft":
-            for (var j = 0; j < stacknumber; j++) {
-              for (var k = 0; k < state.stacks[j].length; k++) {
-                if (isMatching(state.objects[state.stacks[j][k]], object)) {
-                  return true;
-                }
-              }
-            }
-            break;
-          case "toright":
-            for (var j = stacknumber; j >= 0; j--) {
-              for (var k = 0; k < state.stacks[j].length; k++) {
-                if (isMatching(state.objects[state.stacks[j][k]], object)) {
-                  return true;
-                }
-              }
-            }
-            break;
-          case "beside":
-            if (stacknumber > 0) {
-              var leftStack: Stack = state.stacks[stacknumber - 1];
-              for (var j = 0; j < leftStack.length; j++) {
-                if (isMatching(state.objects[leftStack[j]], object)) {
-                  return true;
-                }
-              }
-            }
-
-            if (stacknumber < state.stacks.length - 1) {
-              var rightStack: Stack = state.stacks[stacknumber + 1];
-              for (var j = 0; j < rightStack.length; j++) {
-                if (isMatching(state.objects[rightStack[j]], object)) {
-                  return true;
-                }
-              }
-            }
-            break;
-          case "under":
-            for (var j = 0; j < objectnumber; j++) {
-              if (isMatching(state.objects[state.stacks[stacknumber][j]], object)) {
-                return true;
-              }
-            }
-            break;
-        }
-        return false;
-      } else {
-        return true;
-      }
-    }
-
-    /**
     * @param moveObj Object that is set to be moved.
     * @param destObj Object that moveObj is set to be placed in relation to.
     * @returns True if the placement of moveObj complies with the physical laws of the world.
     */
-    function isAllowed(moveObj: ObjectDefinition, destObj: ObjectDefinition): boolean {
+    function isAllowed(moveObjKey: string, relation: string, destObjKey: string): boolean {
+      var moveObj: ObjectDefinition = state.objects[moveObjKey];
+      var destObj: ObjectDefinition = state.objects[destObjKey];
+      if (moveObjKey === destObjKey) {
+        // Objects can't be moved in relation to themselves.
+        return false;
+      }
+      if (destObj.form === "floor" && !contains(["above","ontop"], relation)) {
+        // everything must be ontop of or above the floor
+        return false;
+      }
       if (moveObj.size === "large" && destObj.size === "small"
-        && ["ontop", "inside", "above"].indexOf(cmd.location.relation) > -1) {
+        && contains(["ontop", "inside", "above"], relation)) {
         // Small objects cannot support large objects.
         return false;
 
       } else if (moveObj.size === "small" && destObj.size === "large"
-        && cmd.location.relation === "under") {
+        && relation === "under") {
         // Small objects cannot support large objects.
         return false;
 
-      } else if (moveObj.form === "ball" && ((["floor", "box"].indexOf(destObj.form) === -1
-        && ["ontop", "inside"].indexOf(cmd.location.relation) > -1) || cmd.location.relation === "under")) {
+      } else if (moveObj.form === "ball" && ((!contains(["floor", "box"], destObj.form)
+        && contains(["ontop", "inside"], cmd.location.relation)) || cmd.location.relation === "under")) {
         // Balls must be in boxes or on the floor, otherwise they roll away.
         // Balls cannot support anything.
         return false;
@@ -331,13 +315,13 @@ module Interpreter {
             // Objects are “inside” boxes, but “ontop” of other objects.
             return false;
           }
-          if (["box", "pyramid", "plank"].indexOf(moveObj.form) > -1 && moveObj.size === destObj.size) {
+          if (contains(["box", "pyramid", "plank"],moveObj.form) && moveObj.size === destObj.size) {
             // Boxes cannot contain pyramids, planks or boxes of the same size.
             return false;
           }
           break;
         case "ball":
-          if (["ontop", "above"].indexOf(cmd.location.relation) > -1) {
+          if (contains(["ontop", "above"], cmd.location.relation)) {
             // Balls cannot support anything.
             return false;
           }
@@ -361,79 +345,35 @@ module Interpreter {
       return true;
     }
 
-
-    // Check each object in the world, to see which of the objects could be moved/taken.
-    for (var i = 0; i < objects.length; i++) {
-      var currentObject: ObjectDefinition = state.objects[objects[i]];
-      // First check it it's matching the description, e.g. large and blue.
-      if (!isMatching(currentObject, cmd.entity.object)) continue;
-
-      // If the item is still matching the description of what to be picked
-      // up, it is added to the array of matching objects.
-      if (findMatch(cmd.entity.object.location, objects[i])) matchingObjects.push(objects[i]);
-    }
-
-    // Find all objects which the object to be moved can be moved in relation to. (destination object)
-    var matchingDestObj: string[] = [];
-    if (cmd.location) {
-      for (var i = 0; i < objects.length; i++) {
-        var destObj: ObjectDefinition = state.objects[objects[i]];
-        // First check it it's matching the description, e.g. large and blue.
-        if (!isMatching(destObj, cmd.location.entity.object)) continue;
-
-        // If the destination object has a location, check if that also matches.
-        if (cmd.location.entity.object.location) {
-          // Floor is special..
-          if (cmd.location.entity.object.location.entity.object.form !== "floor") {
-            if (findMatch(cmd.location.entity.object.location, objects[i])) matchingDestObj.push(objects[i]);
-            continue;
-          } else {
-            // if getPosition()[1] === 0, then the object is on the floor (bottom of the stack).
-            if (getPosition(objects[i])[1] === 0) matchingDestObj.push(objects[i]);
-            continue;
-          }
-        } else {
-          // If there is no specific location of the destination object, add it.
-          matchingDestObj.push(objects[i]);
-        }
-      }
-
-      for (var i = 0; i < matchingObjects.length; i++) {
-        var moveObj = state.objects[matchingObjects[i]];
-        // if the destination is the floor, it always works. Also, floor is special.
-        if (cmd.location.entity.object.form === "floor") {
-          interpretation.push([
-            { polarity: true, relation: cmd.location.relation, args: [matchingObjects[i], "floor"] }
-          ]);
-        } else {
-          // If destination is not floor, check each matching destination object against the laws.
-          for (var j = 0; j < matchingDestObj.length; j++) {
-            var destObj = state.objects[matchingDestObj[j]];
-            if (isAllowed(moveObj, destObj) && matchingObjects[i] !== matchingDestObj[j]) {
-              interpretation.push([
-                { polarity: true, relation: cmd.location.relation, args: [matchingObjects[i], matchingDestObj[j]] }
-              ]);
-            }
-          }
-        }
-      }
-    }
-
-
-    // If the command is to take, each object still matching is added to
-    // the list of interpretations with a "holding"-relation.
-    if (cmd.command == "take") {
-      for (var i = 0; i < matchingObjects.length; i++) {
+    if (cmd.command === "take") {
+      var takeObjs = interpretEntity(cmd.entity);
+      for (var i = 0; i < takeObjs.length; i++) {
         interpretation.push(
-          [{ polarity: true, relation: "holding", args: [matchingObjects[i]] }]);
+          [{ polarity: true, relation: "holding", args: [takeObjs[i]] }]);
+      }
+    } else { // command is put etc.
+      // Objects that can be moved.
+      var moveObjs = interpretEntity(cmd.entity);
+      // Objects that the moveObj can be moved in relation to.
+      var posObjs = interpretEntity(cmd.location.entity);
+
+      // Go through each match and see if it is allowed.
+      for (let m in moveObjs) {
+        for (let p in posObjs) {
+          if (isAllowed(moveObjs[m], cmd.location.relation, posObjs[p])) {
+            interpretation.push([
+              { polarity: true, relation: cmd.location.relation, args: [moveObjs[m], posObjs[p]] }
+            ]);
+          }
+        }
       }
     }
 
-    // If there's no interpetation, throw error.
     if (interpretation.length) {
       return interpretation;
     } else {
-      throw new Error();
+      throw new Error("No interpetation found.");
     }
+
   }
 }
