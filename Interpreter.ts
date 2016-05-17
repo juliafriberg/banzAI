@@ -106,7 +106,87 @@ module Interpreter {
    * @returns A list of list of Literal, representing a formula in disjunctive normal form (disjunction of conjunctions). See the dummy interpetation returned in the code for an example, which means ontop(a,floor) AND holding(b).
    */
   function interpretCommand(cmd: Parser.Command, state: WorldState): DNFFormula {
-    // First few useful functions are defined.
+    var objects: string[] = Array.prototype.concat.apply([], state.stacks);
+    var matchingObjects: string[] = [];
+
+    // The interpetation to return. Will be filled when applicable.
+    var interpretation: DNFFormula = [];
+
+    // First a few useful functions are defined.
+    /**
+    * Contains wrapper for arrays.
+    * @param arr The array to be checked.
+    * @param elem The element that might exists in arr.
+    * @returns True if the array contains the element.
+    */
+    function contains<T>(arr : T[], elem : T) {
+      return arr.indexOf(elem) > -1;
+    }
+
+    /**
+    * Calculates the specific position of an object in the world.
+    * @param object The object to find the position of.
+    * @returns Two numbers; which stack the object is in, and where in the stack it is.
+    */
+    function getPosition(object: string): number[] {
+      var stacknumber: number = 0;
+      var objectnumber: number = 0;
+      for (var j = 0; j < state.stacks.length; j++) {
+        objectnumber = state.stacks[j].indexOf(object);
+        if (objectnumber > -1) {
+          stacknumber = j;
+          break;
+        }
+      }
+      return [stacknumber, objectnumber];
+    }
+
+    /**
+    * Interprets an object into a bunch of strings, representing objects in the world.
+    * @param object The parser object that is to be interpreted.
+    * @returns A list of strings, representing objects in the world.
+    */
+    function interpretObject(object: Parser.Object): string[] {
+      // if there's an object.object, there's also an object.location
+      if (object.object) {
+        // objects matching and locations matching, the intersection are the objects.
+        var matchObjects: string[] = interpretObject(object.object);
+        var locObjects: string[] = interpretLocation(object.location);
+        matchObjects.filter(function(n) {
+          return contains(locObjects, n); //.indexOf(n) != -1;
+        });
+      } else {
+        // There's color/size/form. match against objects in the world.
+        // loop through world and use isMatching
+      }
+
+      return [];
+    }
+
+    /**
+    * Interprets location into a bunch of strings, representing objects in the world.
+    * @param location The parser location that is to be interpreted.
+    * @returns A list of strings, representing objects in the world.
+    */
+    function interpretLocation(location: Parser.Location): string[] {
+      // find _entites_ in correct _relation_
+      var entityObjs : string[] = interpretEntity(location.entity);
+      // for each object in entityObjs, add relating objects to return value.
+      return [];
+    }
+
+    /**
+    * Interprets an entity into a bunch of strings, representing objects in the world.
+    * @param entity The parser entity that is to be interpreted.
+    * @returns A list of strings, representing objects in the world.
+    */
+    function interpretEntity(entity: Parser.Entity): string[] {
+      // an entity is right now just an object. Might implement quantifiers later.
+      var matching : string[] = interpretObject(entity.object);
+      return matching;
+    }
+
+
 
     /**
     * Internal function used to compare an object to a description.
@@ -114,14 +194,7 @@ module Interpreter {
     * @param prelObject An object description. Can contain color, size and/or form.
     * @returns True if currentObject matches the description in prelObject.
     */
-    function isMatching(currentObject: ObjectDefinition, prelObject: Parser.Object): boolean {
-      var object: Parser.Object;
-      if (prelObject.object) {
-        object = prelObject.object;
-      } else {
-        object = prelObject;
-      }
-
+    function isMatching(currentObject: ObjectDefinition, object: Parser.Object): boolean {
       if (object.form !== "anyform" && object.form) {
         if (currentObject.form !== object.form) {
           return false;
@@ -230,24 +303,6 @@ module Interpreter {
     }
 
     /**
-    *
-    * @param object The object to find the position of.
-    * @returns Two numbers; which stack the object is in, and where in the stack it is.
-    */
-    function getPosition(object: string): number[] {
-      var stacknumber: number = 0;
-      var objectnumber: number = 0;
-      for (var j = 0; j < state.stacks.length; j++) {
-        objectnumber = state.stacks[j].indexOf(object);
-        if (objectnumber > -1) {
-          stacknumber = j;
-          break;
-        }
-      }
-      return [stacknumber, objectnumber];
-    }
-
-    /**
     * @param moveObj Object that is set to be moved.
     * @param destObj Object that moveObj is set to be placed in relation to.
     * @returns True if the placement of moveObj complies with the physical laws of the world.
@@ -306,11 +361,6 @@ module Interpreter {
       return true;
     }
 
-    var objects: string[] = Array.prototype.concat.apply([], state.stacks);
-    var matchingObjects: string[] = [];
-
-    // The interpetation to return. Will be filled when applicable.
-    var interpretation: DNFFormula = [];
 
     // Check each object in the world, to see which of the objects could be moved/taken.
     for (var i = 0; i < objects.length; i++) {
