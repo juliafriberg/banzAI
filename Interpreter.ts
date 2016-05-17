@@ -108,6 +108,7 @@ module Interpreter {
   function interpretCommand(cmd: Parser.Command, state: WorldState): DNFFormula {
     var objects: string[] = Array.prototype.concat.apply([], state.stacks);
     var matchingObjects: string[] = [];
+    var x: number = 0;
 
     // The interpetation to return. Will be filled when applicable.
     var interpretation: DNFFormula = [];
@@ -153,9 +154,10 @@ module Interpreter {
         // objects matching and locations matching, the intersection are the objects.
         var matchObjects: string[] = interpretObject(object.object);
         var locObjects: string[] = interpretLocation(object.location);
-        // Intersection function, might not work.
+
+        // Intersection function.
         returnObjects = matchObjects.filter(function(n) {
-          return contains(locObjects, n); //.indexOf(n) != -1;
+          return contains(locObjects, n);
         });
       } else {
         // There's color/size/form. match against objects in the world.
@@ -175,7 +177,7 @@ module Interpreter {
     /**
     * Interprets location into a bunch of strings, representing objects in the world.
     * @param location The parser location that is to be interpreted.
-    * @returns A list of strings, representing objects in the world.
+    * @returns A list of strings, representing objects in the world on the location.
     */
     function interpretLocation(location: Parser.Location): string[] {
       // find _entites_ in correct _relation_
@@ -184,6 +186,18 @@ module Interpreter {
       var returnObjects: string[] = [];
 
       for (var i = 0; i < entityObjs.length; i++) {
+        if (entityObjs[i] === "floor") {
+          if ("ontop" === location.relation) {
+            for (let s in state.stacks) {
+              if (state.stacks[s][0]) {
+                returnObjects.push(state.stacks[s][0])
+              }
+            }
+          } else if("above" === location.relation) {
+            returnObjects = objects;
+          }
+          continue;
+        }
         // pos[0] is stacknumber, pos[1] is number in stack
         var pos: number[] = getPosition(entityObjs[i]);
         switch (location.relation) {
@@ -245,8 +259,7 @@ module Interpreter {
     */
     function interpretEntity(entity: Parser.Entity): string[] {
       // an entity is right now just an object. Might implement quantifiers later.
-      var matching: string[] = interpretObject(entity.object);
-      return matching;
+      return interpretObject(entity.object);
     }
 
 
@@ -282,87 +295,89 @@ module Interpreter {
     * @returns True if the placement of moveObj complies with the physical laws of the world.
     */
     function isAllowed(moveObjKey: string, relation: string, destObjKey: string): boolean {
-      var moveObj: ObjectDefinition = state.objects[moveObjKey];
-      var destObj: ObjectDefinition = state.objects[destObjKey];
-      if (moveObjKey === destObjKey) {
-        // Objects can't be moved in relation to themselves.
+      if (destObjKey === "floor") {
+        if (contains(["ontop","above"], relation)) {
+          return true;
+        }
+        // everything must and can be ontop or above the floor
         return false;
-      }
-      if (destObj.form === "floor" && !contains(["above","ontop"], relation)) {
-        // everything must be ontop of or above the floor
-        return false;
-      }
-      if (moveObj.size === "large" && destObj.size === "small"
-        && contains(["ontop", "inside", "above"], relation)) {
-        // Small objects cannot support large objects.
-        return false;
+      } else {
+        var moveObj: ObjectDefinition = state.objects[moveObjKey];
+        var destObj: ObjectDefinition = state.objects[destObjKey];
+        if (moveObjKey === destObjKey) {
+          // Objects can't be moved in relation to themselves.
+          return false;
+        } else if (moveObj.size === "large" && destObj.size === "small"
+          && contains(["ontop", "inside", "above"], relation)) {
+          // Small objects cannot support large objects.
+          return false;
 
-      } else if (moveObj.size === "small" && destObj.size === "large"
-        && relation === "under") {
-        // Small objects cannot support large objects.
-        return false;
+        } else if (moveObj.size === "small" && destObj.size === "large"
+          && relation === "under") {
+          // Small objects cannot support large objects.
+          return false;
 
-      } else if (moveObj.form === "ball" && ((!contains(["floor", "box"], destObj.form)
-        && contains(["ontop", "inside"], cmd.location.relation)) || cmd.location.relation === "under")) {
-        // Balls must be in boxes or on the floor, otherwise they roll away.
-        // Balls cannot support anything.
-        return false;
-      }
+        } else if (moveObj.form === "ball" && ((!contains(["floor", "box"], destObj.form)
+          && contains(["ontop", "inside"], cmd.location.relation)) || cmd.location.relation === "under")) {
+          // Balls must be in boxes or on the floor, otherwise they roll away.
+          // Balls cannot support anything.
+          return false;
+        } else {
 
-      switch (destObj.form) {
-        case "box":
-          if (cmd.location.relation === "ontop") {
-            // Objects are “inside” boxes, but “ontop” of other objects.
-            return false;
+          switch (destObj.form) {
+            case "box":
+              if (cmd.location.relation === "ontop") {
+                // Objects are “inside” boxes, but “ontop” of other objects.
+                return false;
+              }
+              if (contains(["box", "pyramid", "plank"], moveObj.form) && moveObj.size === destObj.size) {
+                // Boxes cannot contain pyramids, planks or boxes of the same size.
+                return false;
+              }
+              break;
+            case "ball":
+              if (contains(["ontop", "above"], cmd.location.relation)) {
+                // Balls cannot support anything.
+                return false;
+              }
+              break;
+            case "pyramid":
+              if (moveObj.form === "box" && moveObj.size === destObj.size) {
+                // Small boxes cannot be supported by small bricks or pyramids.
+                // Large boxes cannot be supported by large pyramids.
+                return false;
+              }
+              break;
+            case "brick":
+              if (moveObj.form === "box" && destObj.size === "small") {
+                // Small boxes cannot be supported by small bricks or pyramids.
+                return false;
+              }
+              break;
+            default:
+              break;
           }
-          if (contains(["box", "pyramid", "plank"],moveObj.form) && moveObj.size === destObj.size) {
-            // Boxes cannot contain pyramids, planks or boxes of the same size.
-            return false;
-          }
-          break;
-        case "ball":
-          if (contains(["ontop", "above"], cmd.location.relation)) {
-            // Balls cannot support anything.
-            return false;
-          }
-          break;
-        case "pyramid":
-          if (moveObj.form === "box" && moveObj.size === destObj.size) {
-            // Small boxes cannot be supported by small bricks or pyramids.
-            // Large boxes cannot be supported by large pyramids.
-            return false;
-          }
-          break;
-        case "brick":
-          if (moveObj.form === "box" && destObj.size === "small") {
-            // Small boxes cannot be supported by small bricks or pyramids.
-            return false;
-          }
-          break;
-        default:
-          break;
+        }
       }
       return true;
     }
 
+    // Objects to be acted on, moved, taken etc.
+    var actObjs = interpretEntity(cmd.entity);
     if (cmd.command === "take") {
-      var takeObjs = interpretEntity(cmd.entity);
-      for (var i = 0; i < takeObjs.length; i++) {
+      for (var i = 0; i < actObjs.length; i++) {
         interpretation.push(
-          [{ polarity: true, relation: "holding", args: [takeObjs[i]] }]);
+          [{ polarity: true, relation: "holding", args: [actObjs[i]] }]);
       }
     } else { // command is put etc.
-      // Objects that can be moved.
-      var moveObjs = interpretEntity(cmd.entity);
-      // Objects that the moveObj can be moved in relation to.
+      // Objects that the actObj can be moved in relation to.
       var posObjs = interpretEntity(cmd.location.entity);
-
       // Go through each match and see if it is allowed.
-      for (let m in moveObjs) {
+      for (let m in actObjs) {
         for (let p in posObjs) {
-          if (isAllowed(moveObjs[m], cmd.location.relation, posObjs[p])) {
+          if (isAllowed(actObjs[m], cmd.location.relation, posObjs[p])) {
             interpretation.push([
-              { polarity: true, relation: cmd.location.relation, args: [moveObjs[m], posObjs[p]] }
+              { polarity: true, relation: cmd.location.relation, args: [actObjs[m], posObjs[p]] }
             ]);
           }
         }

@@ -74,30 +74,27 @@ Everything is correct!
 Testing utterance: "put a ball in a box on the floor", in world "small"
 Found 2 parses
 Correct interpretations:
-    No correct interpretations!
-Missing interpretations:
-    (-) inside(e,k) | inside(f,k)
-    (-) ontop(f,floor)
+    (1) inside(e,k) | inside(f,k)
+    (2) ontop(f,floor)
+Everything is correct!
 
 --------------------------------------------------------------------------------
 Testing utterance: "put a white ball in a box on the floor", in world "small"
 Found 2 parses
 Correct interpretations:
-    No correct interpretations!
-Missing interpretations:
-    (-) inside(e,k)
+    (1) inside(e,k)
+Everything is correct!
 
 --------------------------------------------------------------------------------
 Testing utterance: "put a black ball in a box on the floor", in world "small"
 Found 2 parses
 Correct interpretations:
-    No correct interpretations!
-Missing interpretations:
-    (-) inside(f,k)
-    (-) ontop(f,floor)
+    (1) inside(f,k)
+    (2) ontop(f,floor)
+Everything is correct!
 
 --------------------------------------------------------------------------------
 Summary statistics
-Passed tests: 10
-Failed tests: 3
+Passed tests: 13
+Failed tests: 0
 
