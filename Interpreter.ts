@@ -193,7 +193,7 @@ module Interpreter {
                 returnObjects.push(state.stacks[s][0])
               }
             }
-          } else if("above" === location.relation) {
+          } else if ("above" === location.relation) {
             returnObjects = objects;
           }
           continue;
@@ -224,20 +224,26 @@ module Interpreter {
             }
             break;
 
-          case "right of":
-            var rightObjs = state.stacks[pos[0] + 1];
-            for (let o in rightObjs) {
-              returnObjects.push(rightObjs[o]);
+          case "rightof":
+            var rights: string[][] = state.stacks.slice(pos[0] + 1);
+            for (let s in rights) {
+              var stackObjs = rights[s];
+              for (let o in stackObjs) {
+                returnObjects.push(stackObjs[o]);
+              }
             }
             break;
-          case "left of":
-            var leftObjs = state.stacks[pos[0] - 1];
-            for (let o in leftObjs) {
-              returnObjects.push(leftObjs[o]);
+          case "leftof":
+            var lefts: string[][] = state.stacks.slice(0, pos[0]);
+            for (let s in lefts) {
+              var stackObjs = lefts[s];
+              for (let o in stackObjs) {
+                returnObjects.push(stackObjs[o]);
+              }
             }
             break;
           case "beside":
-            // Left of and right of combined
+            // Directly right and directly left stacks
             var leftObjs = state.stacks[pos[0] - 1];
             var rightObjs = state.stacks[pos[0] + 1];
             for (let o in leftObjs) {
@@ -296,7 +302,7 @@ module Interpreter {
     */
     function isAllowed(moveObjKey: string, relation: string, destObjKey: string): boolean {
       if (destObjKey === "floor") {
-        if (contains(["ontop","above"], relation)) {
+        if (contains(["ontop", "above"], relation)) {
           return true;
         }
         // everything must and can be ontop or above the floor
@@ -363,13 +369,20 @@ module Interpreter {
     }
 
     // Objects to be acted on, moved, taken etc.
-    var actObjs = interpretEntity(cmd.entity);
+
     if (cmd.command === "take") {
+      var actObjs = interpretEntity(cmd.entity);
       for (var i = 0; i < actObjs.length; i++) {
-        interpretation.push(
-          [{ polarity: true, relation: "holding", args: [actObjs[i]] }]);
+        if (actObjs[i] !== "floor")
+          interpretation.push(
+            [{ polarity: true, relation: "holding", args: [actObjs[i]] }]);
       }
-    } else { // command is put etc.
+    } else {
+      // if it's move, interpret the move entity, else it's put, then the held
+      // object is the one to be placed. If there is a held object.
+      // This nestled if-statement was preferred over copypaste-code.
+      var actObjs = (cmd.command === "move" ? interpretEntity(cmd.entity) :
+                                                  (state.holding ? [state.holding] : []));
       // Objects that the actObj can be moved in relation to.
       var posObjs = interpretEntity(cmd.location.entity);
       // Go through each match and see if it is allowed.
