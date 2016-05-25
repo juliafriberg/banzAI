@@ -33,13 +33,8 @@ class SearchResult<Node> {
 }
 
 /**
-* A\* search implementation, parameterised by a `Node` type. The code
-* here is just a template; you should rewrite this function
-* entirely. In this template, the code produces a dummy search result
-* which just picks the first possible neighbour.
-*
-* Note that you should not change the API (type) of this function,
-* only its body.
+* A\* search implementation, parameterised by a `Node` type.
+
 * @param graph The graph on which to perform A\* search.
 * @param start The initial node.
 * @param goal A function that returns true when given a goal node. Used to determine if the algorithm has reached the goal.
@@ -54,7 +49,6 @@ function aStarSearch<Node>(
   heuristics: (n: Node) => number,
   timeout: number
   ): SearchResult<Node> {
-  // A dummy search result: it just picks the first possible neighbour
   var result: SearchResult<Node> = {
     path: [],
     cost: 0
@@ -104,7 +98,7 @@ function aStarSearch<Node>(
   // closed set is the ones looked at
   var closedSet: Node[] = [];
   var startTime : number = Date.now();
-  while (!openSet.isEmpty() || Date.now() - startTime <= timeout*1000) {
+  while (!openSet.isEmpty() && Date.now() - startTime <= timeout*1000) {
     var current = getLowest();
     // If we're at goal node, reconstruct the path and add to the result
     if (goal(current.node)) {
