@@ -198,8 +198,8 @@ module Planner {
     * @returns Two numbers; which stack the object is in, and where in the stack it is.
     */
     function getPosition(object: string, state: WorldState): number[] {
-      var stacknumber: number = 0;
-      var objectnumber: number = 0;
+      var stacknumber: number = -1;
+      var objectnumber: number = -1;
       for (var j = 0; j < state.stacks.length; j++) {
         objectnumber = state.stacks[j].indexOf(object);
         if (objectnumber > -1) {
@@ -235,33 +235,39 @@ module Planner {
               }
             } else {
               var pos1: number[] = getPosition(literal.args[1], node.state);
-              switch (literal.relation) {
-                case "ontop":
-                case "inside":
-                  blah = (pos0[0] === pos1[0] && pos0[1] - pos1[1] === 1);
-                  break;
+              if(pos0[0] === -1 || pos0[1] === -1 || pos1[0] === -1 || pos1[1] === -1) {
+                blah = false;
 
-                case "above":
-                  blah = (pos0[0] === pos1[0] && pos0[1] - pos1[1] >= 1);
-                  break;
+              } else {
+                switch (literal.relation) {
+                  case "ontop":
+                  case "inside":
+                    blah = (pos0[0] === pos1[0] && pos0[1] - pos1[1] === 1);
+                    break;
 
-                case "under":
-                  blah = (pos0[0] === pos1[0] && pos1[1] - pos0[1] >= 1);
-                  break;
+                  case "above":
+                    blah = (pos0[0] === pos1[0] && pos0[1] - pos1[1] >= 1);
+                    break;
 
-                case "rightof":
-                  blah = (pos0[0] - pos1[0] >= 1);
-                  break;
+                  case "under":
+                    blah = (pos0[0] === pos1[0] && pos1[1] - pos0[1] >= 1);
+                    break;
 
-                case "leftof":
-                  blah = (pos1[0] - pos0[0] >= 1);
-                  break;
+                  case "rightof":
+                    blah = (pos0[0] - pos1[0] >= 1);
+                    break;
 
-                case "beside":
-                  blah = (Math.abs(pos0[0] - pos1[0]) === 1);
-                  break;
+                  case "leftof":
+                    blah = (pos1[0] - pos0[0] >= 1);
+                    break;
+
+                  case "beside":
+                    blah = (Math.abs(pos0[0] - pos1[0]) === 1);
+                    break;
+                }
               }
             }
+
           }
           // one of the literals in the conjunctive formula was false
           if(!blah) break;
