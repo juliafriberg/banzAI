@@ -58,14 +58,6 @@ module Planner {
   // private functions
 
   /**
-   * The core planner function. The code here is just a template;
-   * you should rewrite this function entirely. In this template,
-   * the code produces a dummy plan which is not connected to the
-   * argument `interpretation`, but your version of the function
-   * should be such that the resulting plan depends on
-   * `interpretation`.
-   *
-   *
    * @param interpretation The logical interpretation of the user's desired goal. The plan needs to be such that by executing it, the world is put into a state that satisfies this goal.
    * @param state The current world state.
    * @returns Basically, a plan is a
@@ -76,20 +68,6 @@ module Planner {
    * be added using the `push` method.
    */
   function planInterpretation(interpretation: Interpreter.DNFFormula, state: WorldState): string[] {
-    // This function returns a dummy plan involving a random stack
-
-    /*
-    1. graph with starting node
-    2. outgoingEdges gives each possible move (take or drop), making sure the
-      laws are followed. Cost is left/right moves for arm + 1
-    3. Nodes have the complete world state.
-    4. goal function compares the interpretation to the node state
-    5. heuristics depend on the interpetation. coming soon
-
-    6. loop through states in result in order, making the moves.
-
-    ["Picking up *objet*", "r" "r" "r" "p"]
-    */
 
     class StateNode {
       constructor(
@@ -276,7 +254,6 @@ module Planner {
           return true;
       }
       return false;
-
     }
 
     function heuristics(node: StateNode): number {
