@@ -73,6 +73,7 @@ module Shrdlite {
             });
 
             if (interpretations.length > 1) {
+              throw new Error("Ambiguous utterance");
                 // several interpretations were found -- how should this be handled?
                 // should we throw an ambiguity error?
                 // ... throw new Error("Ambiguous utterance");

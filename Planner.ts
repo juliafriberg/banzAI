@@ -83,7 +83,11 @@ module Planner {
       }
 
       toString(): string {
-        return state.toString();
+        var s : string = "Arm" + state.arm + state.holding;
+        for(var i = 0; i<state.stacks.length; i++) {
+          s = s.concat(s,"Stack",i.toString(),state.stacks[i].toString());
+        }
+        return s;
       }
     }
 
@@ -310,7 +314,7 @@ module Planner {
     var firstNode = new StateNode(state);
     var graph = new StateGraph();
     var plan: string[] = []
-    var timeout : number = 60
+    var timeout : number = 10
     var result = aStarSearch(graph, firstNode, isGoal, heuristics, timeout)
     var oldState = state;
 
