@@ -258,6 +258,52 @@ module Planner {
 
     function heuristics(node: StateNode): number {
       var h: number = 0;
+      if(isGoal(node)) {
+        return h;
+      }
+      var conditionalH : number = 0;
+      for (let c in interpretation) {
+        var literalH : number = 0;
+        for (let l in interpretation[c]) {
+          var literal: Interpreter.Literal = interpretation[c][l];
+          var pos0: number[] = getPosition(literal.args[0], node.state);
+          var pos0H : number = 1;
+          if(!contains(pos0, -1)) {
+            pos0H = Math.abs(node.state.arm - pos0[0]) + node.state.stacks[pos0[0]].length - pos0[1];
+          }
+          if (literal.relation === "holding") {
+            literalH = pos0H;
+          } else {
+            if (literal.args[1] === "floor") {
+              if (literal.relation === "ontop") {
+                literalH = pos0H;
+              }
+            } else {
+              var pos1: number[] = getPosition(literal.args[1], node.state);
+              var pos1H : number = 1;
+              if(!contains(pos1, -1)) {
+                pos1H = Math.abs(node.state.arm - pos1[0]) + node.state.stacks[pos1[0]].length - pos1[1];
+              }
+              switch (literal.relation) {
+                case "ontop":
+                case "inside":
+                  literalH = pos0H + pos1H;
+                  break;
+                case "above":
+                case "under":
+                case "rightof":
+                case "leftof":
+                case "beside":
+                  literalH = Math.min(pos0H, pos1H);
+                  break;
+              }
+            }
+          }
+          // one of the literals in the conjunctive formula was false
+          conditionalH = Math.max(conditionalH, literalH);
+        }
+        h = Math.min(conditionalH, h);
+      }
       return h;
     }
 
