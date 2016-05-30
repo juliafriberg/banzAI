@@ -107,6 +107,7 @@ module Interpreter {
    */
   function interpretCommand(cmd: Parser.Command, state: WorldState): DNFFormula {
     var objects: string[] = Array.prototype.concat.apply([], state.stacks);
+    state.holding ? objects.push(state.holding) : objects.length;
     var matchingObjects: string[] = [];
     var x: number = 0;
 
@@ -130,8 +131,8 @@ module Interpreter {
     * @returns Two numbers; which stack the object is in, and where in the stack it is.
     */
     function getPosition(object: string): number[] {
-      var stacknumber: number = 0;
-      var objectnumber: number = 0;
+      var stacknumber: number = -1;
+      var objectnumber: number = -1;
       for (var j = 0; j < state.stacks.length; j++) {
         objectnumber = state.stacks[j].indexOf(object);
         if (objectnumber > -1) {
